@@ -1,103 +1,96 @@
 // /api/match.js
 export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
   try {
-    if (req.method !== 'POST') {
-      return res.status(405).json({ error: 'Method not allowed' });
-    }
+    const { imgA, imgB, model = 'gpt-4o-mini' } = req.body || {};
+    if (!imgA || !imgB) return res.status(400).json({ error: 'missing images' });
 
-    const { imgA, imgB } = req.body || {};
-    if (!imgA || !imgB) {
-      return res.status(400).json({ error: 'imgA, imgB are required (data URL or URL)' });
-    }
+    const sys = `
+너는 세계 최고 수준의 한국 관상학 전문가이자 심층 분석가다.
+두 사람의 "정면 얼굴" 이미지를 바탕으로 관상적 특징을 읽고, 
+각 운세(재물/연애/건강)에 대해 '관상 특징 근거 → 결론 → 팁' 흐름으로 간결하게 정리한다.
+또한 두 사람의 "연애/우정"과 "비즈니스" 궁합을 각각 0~100점으로 채점하고
+'잘 맞는 점'과 '조심해야 할 점'을 각 2~4개씩 제시한다.
 
-    const systemPrompt = `
-너는 세계 최고의 한국인 관상학자다. 두 장의 얼굴 사진(A,B)을 바탕으로
-과학적 태도와 관상 전통의 해석을 균형 있게 적용한다.
-절대 점집식 과장 표현이나 단정적 운명론은 피하고, 근거를 짧게 제시한다.
-한국어로만 답하고, 아래 JSON 스키마 **그대로** 출력한다. 텍스트나 설명을 JSON 바깥에 쓰지 마라.
+반드시 아래 JSON 스키마로만 출력하라. 한국어로 작성.
+숫자/문장 외 불필요한 설명, 코드블록, 마크다운 금지.
 
-반드시 이 JSON 스키마로:
 {
   "personA": {
-    "summary": "A 인상 한줄요약",
     "features": {
-      "face_shape": "", "forehead": "", "eyebrows": "", "eyes": "",
-      "nose": "", "mouth_lips": "", "ears": "", "jaw_chin": "", "skin_expression": ""
+      "face_shape": "얼굴형",
+      "forehead": "이마",
+      "eyebrows": "눈썹",
+      "eyes": "눈",
+      "nose": "코",
+      "mouth_lips": "입/입술",
+      "ears": "귀",
+      "jaw_chin": "턱/턱선",
+      "skin_expression": "피부/표정"
     },
-    "analysis": "A 해석 2~3문장",
     "fortune": {
-      "wealth": { "summary": "재물운 요약 1~2문장", "tips": ["짧은 조언 1", "짧은 조언 2"] },
-      "love":   { "summary": "연애운 요약 1~2문장", "tips": ["짧은 조언 1", "짧은 조언 2"] },
-      "health": { "summary": "건강운 요약 1~2문장", "tips": ["짧은 조언 1", "짧은 조언 2"] }
+      "wealth":  { "reason": "관상 근거 1~2문장", "verdict": "결론 1~2문장", "tips": ["조언1","조언2"] },
+      "love":    { "reason": "관상 근거 1~2문장", "verdict": "결론 1~2문장", "tips": ["조언1","조언2"] },
+      "health":  { "reason": "관상 근거 1~2문장", "verdict": "결론 1~2문장", "tips": ["조언1","조언2"] }
     }
   },
-  "personB": { ... personA와 동일 구조 ... },
+  "personB": { 동일 구조 },
   "compatibility": {
-    "romance_friendship": {
-      "score": 0-100,
-      "summary": "연애/우정 전반 요약 1문장(선택)",
-      "strengths": ["강점 1", "강점 2"],
-      "cautions":  ["주의점 1", "주의점 2"]
+    "love_friendship": {
+      "score": 0,
+      "strengths": ["잘 맞는 점 1","잘 맞는 점 2"],
+      "cautions":  ["조심해야 할 점 1","조심해야 할 점 2"]
     },
     "business": {
-      "score": 0-100,
-      "summary": "비즈니스 전반 요약 1문장(선택)",
-      "strengths": ["강점 1", "강점 2"],
-      "cautions":  ["주의점 1", "주의점 2"]
+      "score": 0,
+      "strengths": ["잘 맞는 점 1","잘 맞는 점 2"],
+      "cautions":  ["조심해야 할 점 1","조심해야 할 점 2"]
     }
   }
 }
-
-가이드:
-- 각 특징은 사진 기준 외형 관찰로 서술(얼굴형/눈/코 등) + 너무 단정적 성격/운명 단언 금지.
-- 운세 섹션(재물/연애/건강)은 "사진에서 보이는 특징과 전통 관상 해석이 연결되는 정도"로만 간단히.
-- 점수는 5 단위 정도의 현실적인 정수.
-- 전체 길이는 간결하게, 실용 조언(tips)은 짧고 행동지향.
-`;
+    `.trim();
 
     const messages = [
-      { role: "system", content: systemPrompt },
+      { role: 'system', content: sys },
       {
-        role: "user",
+        role: 'user',
         content: [
-          { type: "text", text: "아래 두 장의 얼굴 사진을 분석해 위 JSON 스키마로만 출력하세요." },
-          { type: "image_url", image_url: { url: imgA } },
-          { type: "image_url", image_url: { url: imgB } }
+          { type: 'text', text: '다음 두 얼굴 사진을 분석하여 위 스키마 그대로 JSON만 반환하세요.' },
+          { type: 'image_url', image_url: { url: imgA } },
+          { type: 'image_url', image_url: { url: imgB } }
         ]
       }
     ];
 
-    // OpenAI API 호출
-    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages,
-        temperature: 0.4,
-        response_format: { type: "json_object" }
+        model,
+        temperature: 0.3,
+        response_format: { type: 'json_object' },
+        messages
       })
     });
 
-    if (!resp.ok) {
-      const txt = await resp.text();
-      return res.status(resp.status).json({ error: txt });
+    if (!r.ok) {
+      const err = await r.text();
+      return res.status(500).json({ error: 'openai_error', detail: err });
     }
 
-    const data = await resp.json();
-    let payload = {};
+    const data = await r.json();
+    let out;
     try {
-      payload = JSON.parse(data.choices?.[0]?.message?.content || "{}");
-    } catch (e) {
-      return res.status(500).json({ error: "Invalid JSON from model" });
+      out = JSON.parse(data.choices?.[0]?.message?.content || '{}');
+    } catch {
+      out = {};
     }
-
-    return res.status(200).json(payload);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "Server error" });
+    return res.status(200).json(out);
+  } catch (e) {
+    return res.status(500).json({ error: 'server_error', detail: String(e?.message || e) });
   }
 }
