@@ -29,6 +29,7 @@
     .thumbs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
     .box{border:1px dashed #89a3c91f;border-radius:14px;min-height:160px;display:flex;align-items:center;justify-content:center;background:#0f172a;color:#94a3b8}
     .thumbs img{width:100%;border-radius:12px;display:block}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
     .result{white-space:pre-wrap;background:#0f1623;color:#e7efff;border:1px solid #ffffff17;border-radius:14px;padding:16px;margin-top:12px}
     footer{max-width:1100px;margin:18px auto 30px;padding:0 16px;color:var(--muted);font-size:12px;text-align:center}
     footer a{color:inherit}
@@ -64,8 +65,11 @@
         <div class="box" id="boxA">A 미리보기</div>
         <div class="box" id="boxB">B 미리보기</div>
       </div>
-      <button id="analyze" class="btn" style="width:100%;margin-top:12px">🔮 관상궁합 분석하기</button>
-      <button id="demo" class="soft" style="width:100%;margin-top:8px">💾 데모 이미지로 테스트</button>
+
+      <div class="actions">
+        <button id="analyze" class="btn" style="flex:1">🔮 관상궁합 분석하기</button>
+        <button id="copy" class="soft" style="flex:1">📋 분석 결과 복사하기</button>
+      </div>
     </section>
 
     <section class="panel">
@@ -80,7 +84,7 @@
     // ===== DOM =====
     const q = id => document.getElementById(id);
     const fileA=q('fileA'), fileB=q('fileB');
-    const btnA=q('btnA'), btnB=q('btnB'), analyze=q('analyze'), demo=q('demo');
+    const btnA=q('btnA'), btnB=q('btnB'), analyze=q('analyze'), copyBtn=q('copy');
     const boxA=q('boxA'), boxB=q('boxB'), out=q('out');
     const bar=q('bar'), statusEl=q('status');
 
@@ -92,14 +96,19 @@
     fileA.onchange=e=>readAndPreview(e.target.files?.[0],'A');
     fileB.onchange=e=>readAndPreview(e.target.files?.[0],'B');
 
-    // 내장 데모(네트워크 없이 동작하는 작은 PNG 실루엣)
-    demo.onclick=()=>{
-      const demoA='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAQAAACq...'; // 임의 샘플
-      const demoB='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAQAAACq...';
-      imgA=demoA; imgB=demoB; preview(demoA,'A'); preview(demoB,'B');
+    copyBtn.onclick=async()=>{
+      try{
+        await navigator.clipboard.writeText(out.innerText || '');
+        copyBtn.textContent='✅ 복사됨';
+        setTimeout(()=>copyBtn.textContent='📋 분석 결과 복사하기',1200);
+      }catch(_){ alert('복사에 실패했어요. 브라우저 권한을 확인해주세요.');}
     };
 
-    function setBusy(b,msg){ busy=b; statusEl.textContent=b?(msg||'분석 중…'):'대기 중…'; bar.style.width=b?'70%':'0%'; analyze.disabled=b; btnA.disabled=b; btnB.disabled=b; }
+    function setBusy(b,msg){
+      busy=b; statusEl.textContent=b?(msg||'분석 중…'):'대기 중…';
+      bar.style.width=b?'70%':'0%';
+      analyze.disabled=b; btnA.disabled=b; btnB.disabled=b; copyBtn.disabled=b;
+    }
 
     function readAndPreview(file,who){
       if(!file) return;
@@ -169,7 +178,6 @@
         lines.push(`A) ${s(A.summary || A.overall)}`);
         if(A.features) lines.push(s(A.features));
         else {
-          // person1 스키마(eyes/nose/mouth/ears 등)도 지원
           const part = {eyes:A.eyes, nose:A.nose, mouth_lips:A.mouth||A.mouth_lips, ears:A.ears, face_shape:A.face_shape, forehead:A.forehead, eyebrows:A.eyebrows, jaw_chin:A.jaw_chin, skin_expression:A.skin_expression};
           lines.push(s(part));
         }
