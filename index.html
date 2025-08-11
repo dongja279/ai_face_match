@@ -5,150 +5,118 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>AI 관상궁합</title>
 <style>
-  /* ===== Design Tokens (Dark-first) ===== */
+  /* ========= Tokens ========= */
   :root{
-    --bg:#0b111c;            /* 배경 */
-    --panel:#0e1624;         /* 카드 상단 */
-    --panel2:#0b1422;        /* 카드 하단 */
-    --ink:#eaf0fb;           /* 본문 텍스트 */
-    --muted:#9fb2c8;         /* 보조 텍스트 */
-    --line:#1b2740;          /* 테두리 */
-    --chip:#111b2d;          /* 칩/뱃지 */
-    --gradient1:#7c3aed;     /* 포인트1 */
-    --gradient2:#06b6d4;     /* 포인트2 */
-    --ok:#14a07a;            /* 성공 버튼 */
-    --shadow:0 6px 30px rgba(0,0,0,.28);
+    --bg:#0b111c;
+    --panel:#0e1624;
+    --panel2:#0b1422;
+    --ink:#f3f7ff;         /* 본문: 더 진하게 */
+    --muted:#c6d3e6;       /* 보조: 가독성↑ */
+    --line:#1d2a45;
+    --chip:#142034;
+    --g1:#7c3aed; --g2:#06b6d4; --ok:#14a07a;
+    --shadow:0 6px 28px rgba(0,0,0,.28);
   }
   @media (prefers-color-scheme: light){
     :root{
       --bg:#f6f8fc;
-      --panel:#ffffff;
-      --panel2:#ffffff;
-      --ink:#0e1525;
-      --muted:#5e6a81;
-      --line:#e7edf7;
-      --chip:#f3f6fc;
-      --gradient1:#6d28d9;
-      --gradient2:#0891b2;
-      --ok:#0f8b72;
-      --shadow:0 10px 26px rgba(10,35,70,.08);
+      --panel:#ffffff; --panel2:#ffffff;
+      --ink:#0b1324; --muted:#31425c;   /* 라이트에서 더 진하게 */
+      --line:#dfe7f3; --chip:#eef3fb;
+      --g1:#6d28d9; --g2:#0891b2; --ok:#0f8b72;
+      --shadow:0 10px 24px rgba(10,25,60,.08);
     }
   }
 
-  /* ===== Base ===== */
-  *,*::before,*::after{ box-sizing:border-box }
-  html,body{ height:100% }
+  /* ========= Base ========= */
+  *,*::before,*::after{box-sizing:border-box}
   body{
-    margin:0;
-    background:var(--bg);
-    color:var(--ink);
+    margin:0; background:var(--bg); color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",Segoe UI,Roboto,Helvetica,Arial;
-    text-rendering:optimizeLegibility;
-    -webkit-font-smoothing:antialiased;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
   }
-  .wrap{ max-width:1040px; margin:0 auto; padding:20px }
-  .eyebrow{ color:var(--muted); letter-spacing:.02em }
+  .wrap{max-width:1040px;margin:0 auto;padding:20px}
+  header{display:flex;gap:16px;align-items:center;margin:6px 0 18px}
+  .logo{width:46px;height:46px;border-radius:50%;
+        background:conic-gradient(from 140deg,var(--g1),var(--g2));box-shadow:var(--shadow)}
+  h1{margin:0;font-size:clamp(24px,4.5vw,40px);letter-spacing:-.6px;line-height:1.06}
+  .sub{margin-top:8px;color:var(--muted);font-weight:600;font-size:clamp(13px,2.8vw,16px)}
 
-  /* ===== Header ===== */
-  header{ display:flex; gap:16px; align-items:center; margin:4px 0 18px }
-  .logo{ width:46px;height:46px;border-radius:50%;
-         background:conic-gradient(from 140deg,var(--gradient1),var(--gradient2)); box-shadow:var(--shadow) }
-  h1{ margin:0; font-size:clamp(24px,4.6vw,40px); letter-spacing:-.6px; line-height:1.05 }
-  .sub{ margin-top:8px; color:var(--muted); font-size:clamp(13px,2.8vw,16px); }
+  .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));
+         border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.row{grid-template-columns:1fr}}
 
-  /* ===== Panels ===== */
-  .panel{
-    background:linear-gradient(180deg,var(--panel),var(--panel2));
-    border:1px solid var(--line);
-    border-radius:18px; padding:18px;
-    box-shadow:var(--shadow);
-  }
-  .grid{ display:grid; gap:18px }
-  .row{ display:grid; grid-template-columns:1fr 1fr; gap:18px }
-  @media(max-width:760px){ .row{ grid-template-columns:1fr } }
+  /* ========= Upload ========= */
+  .slot{position:relative;min-height:290px;border:1px solid var(--line);
+        border-radius:16px;background:linear-gradient(180deg,#0c1423,#0a1220);
+        overflow:hidden;display:flex;align-items:end;justify-content:center;padding:16px}
+  .slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .label{position:absolute;left:10px;top:10px;background:var(--chip);color:#e8f1ff;
+         border:1px solid #ffffff33;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px}
+  input[type=file]{display:none}
+  .btn-up{position:relative;z-index:2;border:none;cursor:pointer;min-height:48px;
+          padding:14px 16px;border-radius:12px;font-weight:900;color:#fff;
+          background:linear-gradient(135deg,var(--g1),var(--g2));
+          width:min(88%,360px);box-shadow:0 8px 20px rgba(40,30,120,.35)}
 
-  /* ===== Upload Slots ===== */
-  .slot{
-    position:relative; overflow:hidden; min-height:290px;
-    border:1px solid var(--line); border-radius:16px;
-    background:linear-gradient(180deg,#0c1423,#0a1220);
-    display:flex; align-items:end; justify-content:center; padding:16px;
-  }
-  .slot img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover }
-  .slot .label{
-    position:absolute; left:10px; top:10px; z-index:2;
-    background:var(--chip); color:#cfe1ff; border:1px solid #ffffff22;
-    padding:6px 10px; border-radius:999px; font-weight:800; font-size:12px;
-  }
-  input[type=file]{ display:none }
-  .btn-up{
-    position:relative; z-index:2; border:none; cursor:pointer;
-    min-height:48px; padding:14px 16px; border-radius:12px; font-weight:900; color:#fff;
-    background:linear-gradient(135deg,var(--gradient1),var(--gradient2));
-    width:min(88%, 360px); box-shadow:0 8px 20px rgba(10,20,40,.35);
-  }
+  /* ========= Status / Actions ========= */
+  .meter{height:8px;background:#0e172b;border-radius:999px;overflow:hidden;border:1px solid #ffffff1f}
+  .meter>div{height:100%;width:0%;background:linear-gradient(90deg,#22d3ee,#a78bfa,#22c55e)}
+  .muted{color:var(--muted)!important;font-weight:700} /* 더 진하게 */
 
-  /* ===== Meter / Status ===== */
-  .meter{ height:8px;background:#0e172b;border-radius:999px;overflow:hidden;border:1px solid #ffffff18 }
-  .meter>div{ height:100%;width:0%; background:linear-gradient(90deg,#22d3ee,#a78bfa,#22c55e) }
-  .muted{ color:var(--muted) }
+  .actions{display:flex;flex-direction:column;align-items:center;gap:12px;margin:18px 0 8px}
+  .btn{width:100%;max-width:560px;border:none;border-radius:14px;padding:16px 18px;
+       font-weight:900;cursor:pointer;font-size:clamp(15px,3.6vw,18px)}
+  .btn.primary{color:#fff;background:linear-gradient(135deg,var(--g1),var(--g2));box-shadow:0 10px 24px rgba(86,46,200,.35)}
+  .btn.success{color:#fff;background:var(--ok);box-shadow:0 10px 22px rgba(20,160,122,.32)}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
 
-  /* ===== Actions (center) ===== */
-  .actions{ display:flex; flex-direction:column; align-items:center; gap:12px; margin:18px 0 8px }
-  .btn{
-    width:100%; max-width:560px;
-    border:none; border-radius:14px; padding:16px 18px; font-weight:900; cursor:pointer;
-    font-size:clamp(15px,3.6vw,18px);
-  }
-  .btn.primary{ color:#fff; background:linear-gradient(135deg,var(--gradient1),var(--gradient2)); box-shadow:0 10px 24px rgba(80,35,160,.35) }
-  .btn.success{ color:#fff; background:var(--ok); box-shadow:0 10px 22px rgba(20,160,122,.32) }
-  .btn:disabled{ opacity:.55; cursor:not-allowed }
+  /* ========= Result ========= */
+  h3{margin:0 0 12px;font-size:clamp(18px,4.2vw,22px);letter-spacing:-.2px}
+  h4{margin:0 0 8px;font-size:clamp(16px,3.8vw,19px)}
+  .section{background:linear-gradient(180deg,var(--panel),var(--panel2));
+           border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:16px;box-shadow:var(--shadow)}
+  .who{border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:12px;background:#0d1730a6}
+  .pill{display:inline-block;font-size:12.5px;background:var(--chip);color:#e7f0ff;
+        padding:6px 10px;border-radius:999px;border:1px solid #ffffff33;font-weight:900}
+  .list{padding-left:18px;margin:8px 0}
+  .score{display:flex;gap:12px;align-items:center}
+  .dot{width:68px;height:68px;border-radius:50%;
+       background:radial-gradient(circle at 30% 30%,#a7b3ff,#7c3aed);
+       display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:20px}
 
-  /* ===== Results ===== */
-  h3{ margin:0 0 12px; font-size:clamp(18px,4.3vw,22px) }
-  h4{ margin:0 0 8px; font-size:clamp(16px,3.8vw,19px) }
-  .section{ background:linear-gradient(180deg,var(--panel),var(--panel2)); border:1px solid var(--line); border-radius:16px; padding:16px; margin-top:16px; box-shadow:var(--shadow) }
-  .who{ border:1px solid var(--line); border-radius:14px; padding:12px; margin-top:12px; background:#0c1423aa }
-  .pill{ display:inline-block; font-size:12px; background:var(--chip); color:#bcd3ff; padding:6px 10px; border-radius:999px; border:1px solid #ffffff22 }
-  .list{ padding-left:18px; margin:8px 0 }
-  .score{ display:flex; gap:12px; align-items:center }
-  .score .dot{
-    width:68px; height:68px; border-radius:50%;
-    background:radial-gradient(circle at 30% 30%,#a7b3ff,#7c3aed);
-    display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900; font-size:20px
-  }
+  /* 강조 텍스트 더 진하게 */
+  b,strong{color:var(--ink);font-weight:900}
 
-  /* ===== Footer ===== */
-  footer{ margin:28px 0 10px; color:var(--muted); text-align:center }
-  a.mail{ color:#9ed2ff; text-decoration:none }
+  footer{margin:28px 0 10px;color:var(--muted);text-align:center}
+  a.mail{color:#9ed2ff;text-decoration:none}
 </style>
 </head>
 <body>
   <div class="wrap">
-    <!-- Header -->
     <header>
       <div class="logo" aria-hidden="true"></div>
       <div>
         <h1>AI 관상궁합</h1>
-        <div class="sub">두 사람의 얼굴 사진을 업로드하면, 심층 궁합 분석을 제공합니다. <span class="eyebrow">(재미로만 보세요!)</span></div>
+        <div class="sub">두 사람의 얼굴 사진을 업로드하면, 심층 궁합 분석을 제공합니다. <span style="opacity:.9">(재미로만 보세요!)</span></div>
       </div>
     </header>
 
-    <!-- Upload -->
     <section class="panel">
       <h3>사진 업로드</h3>
       <div class="row" style="margin-top:10px">
         <div class="slot" id="slotA">
           <span class="label">A</span>
           <img id="imgPrevA" alt="" style="display:none">
-          <input id="fileA" type="file" accept="image/*">
-          <button class="btn-up" id="btnA" aria-label="A 사진 업로드">A 사진 업로드</button>
+          <input id="fileA" type="file" accept="image/*" />
+          <button id="btnA" class="btn-up">A 사진 업로드</button>
         </div>
         <div class="slot" id="slotB">
           <span class="label">B</span>
           <img id="imgPrevB" alt="" style="display:none">
-          <input id="fileB" type="file" accept="image/*">
-          <button class="btn-up" id="btnB" aria-label="B 사진 업로드">B 사진 업로드</button>
+          <input id="fileB" type="file" accept="image/*" />
+          <button id="btnB" class="btn-up">B 사진 업로드</button>
         </div>
       </div>
 
@@ -163,178 +131,155 @@
       </div>
     </section>
 
-    <!-- Results -->
     <div id="out"></div>
 
     <footer>✉️ 문의: <a class="mail" href="mailto:dongja279@gmail.com">dongja279@gmail.com</a></footer>
   </div>
 
 <script>
-/* ===== DOM ===== */
+/* ========== DOM / state ========== */
 const fileA = document.getElementById('fileA');
 const fileB = document.getElementById('fileB');
 const btnA  = document.getElementById('btnA');
 const btnB  = document.getElementById('btnB');
 const prevA = document.getElementById('imgPrevA');
 const prevB = document.getElementById('imgPrevB');
-
 const bar = document.getElementById('bar');
 const statusEl = document.getElementById('status');
 const analyzeBtn = document.getElementById('analyze');
 const shareBtn = document.getElementById('shareBtn');
 const out = document.getElementById('out');
 
-let imgA = null, imgB = null;
-let lastResult = null;
-let busy = false;
+let imgA=null,imgB=null,lastResult=null,busy=false;
 
-/* ===== Utils ===== */
-function setBusy(v){ busy=v; analyzeBtn.disabled=v; }
-function toDataURL(file){
-  return new Promise((resolve,reject)=>{
-    const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.onerror= reject;
-    r.readAsDataURL(file);
-  });
-}
-btnA.onclick = ()=> fileA.click();
-btnB.onclick = ()=> fileB.click();
+/* ========== helpers ========== */
+const toDataURL = f => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f);});
+btnA.onclick=()=>fileA.click(); btnB.onclick=()=>fileB.click();
+fileA.onchange=async e=>{ const f=e.target.files?.[0]; if(!f) return; imgA=await toDataURL(f); prevA.src=imgA; prevA.style.display='block'; }
+fileB.onchange=async e=>{ const f=e.target.files?.[0]; if(!f) return; imgB=await toDataURL(f); prevB.src=imgB; prevB.style.display='block'; }
 
-fileA.onchange = async (e)=>{
-  const f = e.target.files?.[0]; if(!f) return;
-  imgA = await toDataURL(f);
-  prevA.src = imgA; prevA.style.display='block';
-}
-fileB.onchange = async (e)=>{
-  const f = e.target.files?.[0]; if(!f) return;
-  imgB = await toDataURL(f);
-  prevB.src = imgB; prevB.style.display='block';
-}
-
-/* ===== Analyze ===== */
-async function runAnalyze(){
-  if(!imgA || !imgB){ alert('A, B 사진을 모두 업로드해 주세요.'); return; }
+/* ========== analyze ========== */
+analyzeBtn.onclick = async ()=>{
+  if(!imgA||!imgB){ alert('A, B 사진을 모두 업로드해 주세요.'); return; }
   try{
-    setBusy(true);
-    statusEl.textContent = '분석중…';
-    bar.style.width = '65%';
-    shareBtn.disabled = true;
+    busy=true; analyzeBtn.disabled=true; shareBtn.disabled=true;
+    statusEl.textContent='분석중…'; bar.style.width='65%';
 
-    const r = await fetch('/api/match', {
+    /* 프롬프트 힌트: 근거는 '관상특징'으로 명시하게 강제 */
+    const promptHints = `
+- 각 사람에 대해 "근거"는 반드시 관상 특징을 명시하세요.
+- 예: "코가 곧고 콧날이 선명함", "이마가 넓고 매끄럽다", "눈꼬리가 살짝 올라감", "입꼬리가 올라간 형태", "귓볼이 두툼함", "턱선이 둥글다/각지다", "피부결이 맑다".
+- "결론"은 해당 근거가 왜 재물운/연애운/건강운에 연결되는지 한 문장으로 요약하세요.
+- "팁"은 1~2개로 실천 문장.
+`;
+
+    const r = await fetch('/api/match',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ imgA, imgB })
+      body: JSON.stringify({ imgA, imgB, promptHints })
     });
-    if(!r.ok){
-      const t = await r.text();
-      throw new Error(t);
-    }
+    if(!r.ok) throw new Error(await r.text());
     const data = await r.json();
-    lastResult = data;
-    out.innerHTML = renderAll(data);
 
-    statusEl.textContent = '분석완료!';
-    bar.style.width = '100%';
-    shareBtn.disabled = false;
-    window.scrollTo({ top: out.offsetTop - 10, behavior:'smooth' });
+    /* 근거에 관상용어가 없으면 간단한 보정 문구를 덧붙여 가독성 보장 */
+    enforceFacialTerms(data?.personA?.fortune?.wealth);
+    enforceFacialTerms(data?.personA?.fortune?.love);
+    enforceFacialTerms(data?.personA?.fortune?.health);
+    enforceFacialTerms(data?.personB?.fortune?.wealth);
+    enforceFacialTerms(data?.personB?.fortune?.love);
+    enforceFacialTerms(data?.personB?.fortune?.health);
+
+    lastResult=data;
+    out.innerHTML = renderAll(data);
+    statusEl.textContent='분석완료!'; bar.style.width='100%';
+    shareBtn.disabled=false;
+    window.scrollTo({top:out.offsetTop-10,behavior:'smooth'});
   }catch(e){
-    console.error(e);
-    statusEl.textContent = '오류';
-    bar.style.width = '0%';
-    alert('분석 중 오류가 발생했습니다.');
+    console.error(e); alert('분석 중 오류가 발생했습니다.');
+    statusEl.textContent='오류'; bar.style.width='0%';
   }finally{
-    setBusy(false);
+    busy=false; analyzeBtn.disabled=false;
+  }
+};
+
+/* 관상용어 fallback */
+function enforceFacialTerms(obj){
+  if(!obj||!obj.reason) return;
+  const terms = /(이마|눈|눈썹|코|입|입술|귀|턱|턱선|광대|피부)/;
+  if(!terms.test(obj.reason)){
+    obj.reason = `관상 특징(이마/눈/코/입/귀/턱선 등)의 균형과 인상에 기반. ` + obj.reason;
   }
 }
-analyzeBtn.onclick = runAnalyze;
 
-/* ===== Share (Short Link) ===== */
+/* ========== share short link ========== */
 shareBtn.onclick = async ()=>{
   try{
     if(!lastResult){ alert('먼저 분석을 완료해 주세요.'); return; }
-    const r = await fetch('/api/share', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ result: lastResult })
-    });
+    const r = await fetch('/api/share',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ result:lastResult }) });
     if(!r.ok) throw new Error(await r.text());
     const { id } = await r.json();
     const url = `${location.origin}/v?id=${id}`;
     await navigator.clipboard.writeText(url);
-    shareBtn.textContent = '✅ 링크 복사됨';
-    setTimeout(()=> shareBtn.textContent='📋 분석 결과 복사하기(링크)', 1200);
-    if(navigator.share){ try{ await navigator.share({ title:'AI 관상궁합 결과', url }); }catch{} }
-  }catch(e){
-    alert('링크 생성 실패: ' + (e?.message || e));
-  }
+    shareBtn.textContent='✅ 링크 복사됨';
+    setTimeout(()=>shareBtn.textContent='📋 분석 결과 복사하기(링크)',1200);
+    if(navigator.share){ try{ await navigator.share({title:'AI 관상궁합 결과',url}); }catch{} }
+  }catch(e){ alert('링크 생성 실패: '+(e?.message||e)); }
 };
 
-/* ===== Renderers ===== */
-const S = v => (v==null?'':String(v));
-const L = a => (Array.isArray(a)?a:[a]).filter(Boolean).map(x=>`<li>${S(x)}</li>`).join('');
+/* ========== renderers ========== */
+const S=v=>v==null?'':String(v);
+const L=a=>(Array.isArray(a)?a:[a]).filter(Boolean).map(x=>`<li>${S(x)}</li>`).join('');
 
-/* 운세 블럭: 근거/결론/팁 모두 표시 */
-function fortuneBlock(title, obj){
-  if(!obj) return '';
+function fortuneBox(title, f){
+  if(!f) return '';
   return `
-    <div class="section" style="margin-top:10px">
-      <span class="pill">${title}</span>
-      ${obj.reason ? `<div style="margin-top:10px"><b>근거:</b> ${S(obj.reason)}</div>`:''}
-      ${obj.verdict? `<div style="margin-top:6px"><b>결론:</b> ${S(obj.verdict)}</div>`:''}
-      ${(obj.tips && obj.tips.length) ? `<ul class="list" style="margin-top:8px">${L(obj.tips)}</ul>`:''}
-    </div>
-  `;
+  <div class="section" style="margin-top:12px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));">
+    <span class="pill">${title}</span>
+    ${f.reason  ? `<div style="margin-top:10px"><strong>근거:</strong> ${S(f.reason)}</div>` : ''}
+    ${f.verdict ? `<div style="margin-top:6px"><strong>결론:</strong> ${S(f.verdict)}</div>` : ''}
+    ${(f.tips&&f.tips.length)? `<ul class="list" style="margin-top:8px">${L(f.tips)}</ul>`:``}
+  </div>`;
 }
 function personBlock(label, p){
-  const F = p?.fortune || {};
-  return `
-    <div class="who">
-      <h4>${label}</h4>
-      ${fortuneBlock('재물운', F.wealth)}
-      ${fortuneBlock('연애운', F.love)}
-      ${fortuneBlock('건강운', F.health)}
-    </div>
-  `;
+  const F=p?.fortune||{};
+  return `<div class="who">
+    <h4>${label}</h4>
+    ${fortuneBox('재물운', F.wealth)}
+    ${fortuneBox('연애운', F.love)}
+    ${fortuneBox('건강운', F.health)}
+  </div>`;
 }
 function compatBlock(title, data){
-  return `
-    <div class="section">
-      <div class="score">
-        <div class="dot">${S(data?.score ?? 0)}</div>
-        <h3 style="margin:0">${title}</h3>
-      </div>
-      <div style="margin-top:12px"><b>잘 맞는 점</b></div>
-      <ul class="list">${L(data?.strengths || [])}</ul>
-      <div style="margin-top:8px"><b>조심해야 할 점</b></div>
-      <ul class="list">${L(data?.cautions || [])}</ul>
-    </div>
-  `;
+  return `<div class="section">
+    <div class="score"><div class="dot">${S(data?.score??0)}</div><h3 style="margin:0">${title}</h3></div>
+    <div style="margin-top:12px"><strong>잘 맞는 점</strong></div>
+    <ul class="list">${L(data?.strengths||[])}</ul>
+    <div style="margin-top:8px"><strong>조심해야 할 점</strong></div>
+    <ul class="list">${L(data?.cautions||[])}</ul>
+  </div>`;
 }
 function renderAll(d){
   return `
     <div class="section"><h3>👤 개인별 관상 특징 & 운세</h3>
-      ${personBlock('A', d.personA || {})}
-      ${personBlock('B', d.personB || {})}
+      ${personBlock('A', d.personA||{})}
+      ${personBlock('B', d.personB||{})}
     </div>
-    ${compatBlock('💖 연애/우정', d?.compatibility?.love_friendship || {})}
-    ${compatBlock('💼 비즈니스', d?.compatibility?.business || {})}
+    ${compatBlock('💖 연애/우정', d?.compatibility?.love_friendship||{})}
+    ${compatBlock('💼 비즈니스', d?.compatibility?.business||{})}
   `;
 }
 
-/* ===== Open Shared Link ===== */
-(function bootFromShared(){
+/* ========== open shared ========== */
+(function openShared(){
   const id = new URLSearchParams(location.search).get('id');
   if(!id) return;
   fetch(`/api/get?id=${encodeURIComponent(id)}`)
-    .then(r => r.ok ? r.json() : Promise.reject('not found'))
-    .then(d => {
-      lastResult = d;
-      out.innerHTML = renderAll(d);
+    .then(r=>r.ok?r.json():Promise.reject())
+    .then(d=>{
+      lastResult=d; out.innerHTML=renderAll(d);
       document.querySelector('.panel').style.display='none';
-      statusEl.textContent = '분석완료!';
-      bar.style.width = '100%';
-      window.scrollTo({ top: out.offsetTop - 10, behavior:'smooth' });
+      statusEl.textContent='분석완료!'; bar.style.width='100%';
+      window.scrollTo({top:out.offsetTop-10,behavior:'smooth'});
     })
     .catch(()=>{});
 })();
