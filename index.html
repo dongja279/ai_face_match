@@ -253,4 +253,70 @@
       uploadCard.style.display='none';           // 업로드 숨김
       shareCta.style.display='grid';             // CTA 노출
       out.innerHTML = renderHTML(data);
-      statusEl
+      statusEl.textContent='분석완료!';
+      bar.style.width='100%';
+    })();
+
+    /* ---------- 렌더러 (요청사항 반영) ---------- */
+    function renderHTML(d){
+      const S = s=> (s??'').toString();
+      const L = arr => (Array.isArray(arr)?arr:[arr]).filter(Boolean).map(x=>`<li>${S(x)}</li>`).join('');
+
+      // 개인: 재물/연애/건강만 + 근거 요약 + 팁
+      const fblock = (title, obj) => {
+        if(!obj) return '';
+        return `
+          <div style="margin-top:8px">
+            <div class="pill">${title}</div>
+            ${obj.summary?`<div style="margin-top:6px">${S(obj.summary)}</div>`:''}
+            ${obj.tips?`<ul class="list">${L(obj.tips)}</ul>`:''}
+          </div>`;
+      };
+      const person = (label, p) => {
+        if(!p) return '';
+        const F = p.fortune || {}; // wealth/love/health
+        return `
+          <div class="who">
+            <h4>${label}</h4>
+            ${fblock('재물운', F.wealth)}
+            ${fblock('연애운', F.love)}
+            ${fblock('건강운', F.health)}
+          </div>`;
+      };
+
+      const individuals = `
+        <div class="section">
+          <h3>👥 개인별 관상 특징 & 운세</h3>
+          <div class="pair">
+            ${person('A', d.personA||d.person1)}
+            ${person('B', d.personB||d.person2)}
+          </div>
+        </div>`;
+
+      // 궁합: 1) 연애/우정 2) 비즈니스
+      const c = d.compatibility||{};
+      const block = (title, obj) => !obj ? '' : `
+        <div class="scoreCard">
+          <div class="scoreTitle">
+            <b>${title}</b>
+            <div class="badge">${obj.score ?? '?'}</div>
+          </div>
+          ${obj.summary?`<div class="pill" style="display:inline-block;margin-bottom:8px">${S(obj.summary)}</div>`:''}
+          ${obj.strengths?`<div><b>• 잘 맞는 점</b><ul class="list">${L(obj.strengths)}</ul></div>`:''}
+          ${obj.cautions?`<div style="margin-top:6px"><b>• 조심해야 할 점</b><ul class="list">${L(obj.cautions)}</ul></div>`:''}
+        </div>`;
+
+      const compat = `
+        <div class="section">
+          <h3>🔗 궁합 해석</h3>
+          <div class="scoreRow">
+            ${block('1) 연애/우정', c.romance_friendship || c.love_friendship)}
+            ${block('2) 비즈니스', c.business)}
+          </div>
+        </div>`;
+
+      return `${individuals}${compat}`;
+    }
+  </script>
+</body>
+</html>
