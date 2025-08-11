@@ -1,178 +1,246 @@
 // api/match.js
-// 관상궁합 서버 함수 — OpenAI 멀티모달 호출 + 안정적 JSON 파싱/검증
+// - 프롬프트 강화(각 항목 비지 않게 강제)
+// - personA/B가 비거나 동일문장 방지
+// - normalize로 빈값 기본문구 대체
+// - JSON 파싱 견고화
 
 export default async function handler(req, res) {
   try {
-    // 1) 메서드 가드
     if (req.method !== 'POST') {
-      res.setHeader('Allow', 'POST');
-      return res.status(405).json({ error: 'Method Not Allowed' });
+      return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    // 2) 입력 파라미터 체크
     const { imgA, imgB } = req.body || {};
     if (!imgA || !imgB) {
       return res.status(400).json({ error: '이미지 A/B가 필요합니다.' });
     }
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ error: 'OPENAI_API_KEY 미설정' });
+
+    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+    if (!OPENAI_API_KEY) {
+      return res.status(500).json({ error: '서버 설정 오류: OPENAI_API_KEY 누락' });
     }
 
-    // 3) 프롬프트(중복 근거 방지 + JSON-only 강제)
+    // -------------------------
+    // 프롬프트(강화 버전)
+    // -------------------------
     const system = `
-너는 세계 최고 수준의 한국 관상 전문가이자 성실한 데이터 라벨러다.
-두 사람 얼굴 사진을 보고 아래 JSON 스키마로만 답한다.
+너는 세계 최고 수준의 "한국 관상 전문가"이자 성실한 데이터 라벨러다.
+두 사람의 정면 얼굴 사진을 보고 아래 JSON 스키마로만 답한다.
 
-규칙:
-- 각 운세의 "reason"(근거)은 반드시 2~3개의 구체적 관상 특징을 적는다.
-  예) "이마가 넓고 매끈함", "콧대가 곧고 콧끝이 둥글다", "눈꼬리가 살짝 올라 밝은 인상", "입꼬리가 올라 미소형", "귀볼이 두툼함", "턱선이 부드럽다/각지다".
-- "verdict"(결론)은 그 특징이 왜 해당 운(재물/연애/건강)으로 이어지는지 1~2문장으로 요약한다.
-- A와 B의 reason 문장은 동일 금지(단어/표현 중복 최소화).
-- 설명은 한국어.
-- JSON 외의 어떤 텍스트도 출력하지 말 것. 코드블록(\`\`\`)도 금지.
-- 아래 스키마의 키를 추가/삭제하지 말 것. 값만 채운다.
+반드시 지킬 규칙:
+- personA와 personB의 모든 필드(reason, verdict, tips)는 "빈 문자열 없이" 작성한다.
+- personA와 personB의 "reason" 문장은 서로 같은 표현을 금지(동어 반복/복붙 금지). 관찰 포인트를 달리 적는다.
+- 각 운세의 "reason"(근거)은 2~3개의 구체 관상 특징을 반드시 적는다.
+  예) "이마가 넓고 매끈함", "콧대가 곧고 코끝이 둥글다", "눈꼬리가 살짝 올라가 밝은 인상",
+      "입꼬리가 올라간 미소형", "턱선이 부드럽다/각지다" 등.
+- verdict(결론)은 "왜 그 운(재물/연애/건강)으로 연결되는지" 한두 문장으로 요약.
+- tips는 행동 조언 2개(짧고 명확)로 채운다.
+- 설명은 "한국어"로 작성.
+- 아래 스키마의 키를 추가/삭제하지 말고 100% 준수해서 "JSON만" 출력(서문/후기는 금지).
 
-출력 JSON:
+출력 JSON 스키마:
 {
   "personA": {
-    "wealth":  { "reason": "", "verdict": "", "tips": ["",""] },
-    "love":    { "reason": "", "verdict": "", "tips": ["",""] },
-    "health":  { "reason": "", "verdict": "", "tips": ["",""] }
+    "wealth": { "reason": "...", "verdict": "...", "tips": ["...", "..."] },
+    "love":   { "reason": "...", "verdict": "...", "tips": ["...", "..."] },
+    "health": { "reason": "...", "verdict": "...", "tips": ["...", "..."] }
   },
   "personB": {
-    "wealth":  { "reason": "", "verdict": "", "tips": ["",""] },
-    "love":    { "reason": "", "verdict": "", "tips": ["",""] },
-    "health":  { "reason": "", "verdict": "", "tips": ["",""] }
+    "wealth": { "reason": "...", "verdict": "...", "tips": ["...", "..."] },
+    "love":   { "reason": "...", "verdict": "...", "tips": ["...", "..."] },
+    "health": { "reason": "...", "verdict": "...", "tips": ["...", "..."] }
   },
   "compatibility": {
     "love_friendship": {
-      "score": 0,
-      "strengths": ["",""],
-      "cautions":  ["",""]
+      "score": 0,             // 0~100 정수
+      "strengths": ["...", "..."],
+      "cautions":  ["...", "..."]
     },
     "business": {
-      "score": 0,
-      "strengths": ["",""],
-      "cautions":  ["",""]
+      "score": 0,             // 0~100 정수
+      "strengths": ["...", "..."],
+      "cautions":  ["...", "..."]
     }
   }
 }
     `.trim();
 
-    // 4) OpenAI 호출 (멀티모달)
-    const model = 'gpt-4o-mini'; // 필요시 'gpt-4o'로 변경 가능
-    const temperature = 0.8; // 다양성↑, 중복 표현 감소
-
-    const payload = {
-      model,
-      temperature,
-      messages: [
-        { role: 'system', content: system },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: '두 사람의 얼굴 정면 사진입니다. 위 규칙을 지켜 JSON만 반환하세요.' },
-            { type: 'image_url', image_url: { url: imgA } },
-            { type: 'image_url', image_url: { url: imgB } }
-          ]
-        }
-      ]
+    const user = {
+      role: 'user',
+      content: [
+        { type: 'text', text: '두 사람의 정면 얼굴을 분석해 위 JSON 스키마로만 정확히 출력하세요.' },
+        { type: 'image_url', image_url: { url: imgA } },
+        { type: 'image_url', image_url: { url: imgB } },
+      ],
     };
 
-    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+    // -------------------------
+    // OpenAI 호출
+    // -------------------------
+    const model = 'gpt-4o-mini';
+    const temperature = 0.2;
+
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        model,
+        temperature,
+        messages: [
+          { role: 'system', content: system },
+          user,
+        ],
+      }),
     });
 
-    if (!r.ok) {
-      const errText = await r.text().catch(() => '');
-      console.error('OpenAI error:', r.status, errText);
-      return res.status(500).json({ error: 'AI 요청 실패', detail: errText?.slice?.(0, 400) });
+    if (!resp.ok) {
+      const err = await safeJson(resp);
+      throw new Error(err?.error?.message || `OpenAI error ${resp.status}`);
     }
-
-    const data = await r.json();
+    const data = await resp.json();
     const content = data?.choices?.[0]?.message?.content || '';
-    if (!content) {
-      return res.status(500).json({ error: 'AI 응답 비어있음' });
-    }
 
-    // 5) JSON만 안전 파싱 (앞뒤 잡소리 제거용)
-    const parsed = safeJsonParse(content);
-    if (!parsed) {
-      console.error('RAW content for debugging:\n', content);
-      return res.status(500).json({ error: 'JSON 파싱 실패' });
-    }
+    // -------------------------
+    // JSON 파싱 견고화
+    // -------------------------
+    const raw = tryExtractJSON(content);
+    const parsed = safeJsonParse(raw);
 
-    // 6) 스키마 보정(누락 필드 기본값 채우기)
-    const result = normalizeSchema(parsed);
+    // -------------------------
+    // 스키마 보정/기본문구 채우기
+    // -------------------------
+    const normalized = normalizeSchema(parsed);
 
-    // 7) 응답
-    res.setHeader('Cache-Control', 'no-store');
-    return res.status(200).json(result);
+    return res.status(200).json(normalized);
   } catch (e) {
-    console.error('match.js fatal:', e);
-    return res.status(500).json({ error: '서버 오류', detail: String(e?.message || e) });
+    console.error('match error:', e);
+    return res.status(500).json({ error: '분석 중 오류가 발생했습니다.' });
   }
 }
 
-/* ---------- 유틸: 안전 파싱 ---------- */
-function safeJsonParse(text) {
-  // 1차 시도: 바로 파싱
-  try { return JSON.parse(text); } catch (_) {}
+// ---------- 유틸들 ----------
 
-  // 2차 시도: 본문에서 JSON 블록만 추출
-  const first = text.indexOf('{');
-  const last = text.lastIndexOf('}');
-  if (first !== -1 && last !== -1 && last > first) {
-    const slice = text.slice(first, last + 1);
-    try { return JSON.parse(slice); } catch (_) {}
+function tryExtractJSON(text = '') {
+  // ```json ... ``` 블록 혹은 중괄호만 추출
+  const codeBlock = text.match(/```json([\s\S]*?)```/i);
+  if (codeBlock) return codeBlock[1].trim();
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    return text.slice(firstBrace, lastBrace + 1);
   }
-  return null;
+  return text.trim();
 }
 
-/* ---------- 유틸: 스키마 보정 ---------- */
-function normalizeSchema(obj) {
-  const blankSection = () => ({ reason: '', verdict: '', tips: ['', ''] });
-  const person = (p = {}) => ({
-    wealth:  fill(p.wealth,  blankSection()),
-    love:    fill(p.love,    blankSection()),
-    health:  fill(p.health,  blankSection())
-  });
-  const compBlock = (c = {}) => ({
-    score: clampInt(c.score, 0, 100, 0),
-    strengths: Array.isArray(c.strengths) ? c.strengths : [],
-    cautions:  Array.isArray(c.cautions)  ? c.cautions  : []
-  });
+function safeJsonParse(s) {
+  try {
+    return JSON.parse(s);
+  } catch {
+    return null;
+  }
+}
 
-  return {
-    personA: person(obj.personA),
-    personB: person(obj.personB),
-    compatibility: {
-      love_friendship: compBlock(obj?.compatibility?.love_friendship),
-      business:       compBlock(obj?.compatibility?.business)
-    }
+async function safeJson(resp) {
+  try {
+    return await resp.json();
+  } catch {
+    return null;
+  }
+}
+
+function toStr(v, defaultText = '정보 없음') {
+  const str = (v === null || v === undefined) ? '' : String(v).trim();
+  return str.length > 0 ? str : defaultText;
+}
+
+function fillFortune(src) {
+  const base = {
+    reason: '관상 특징 분석 불가',
+    verdict: '결론 없음',
+    tips: ['', ''],
   };
-}
-
-function fill(src, tmpl) {
-  const out = { ...tmpl, ...(src || {}) };
+  const out = { ...base, ...(src || {}) };
+  out.reason = toStr(out.reason, base.reason);
+  out.verdict = toStr(out.verdict, base.verdict);
   if (!Array.isArray(out.tips)) out.tips = ['', ''];
   if (out.tips.length < 2) out.tips = [...out.tips, ''].slice(0, 2);
-  out.reason  = toStr(out.reason);
-  out.verdict = toStr(out.verdict);
+  out.tips = out.tips.map(t => toStr(t, ''));
   return out;
 }
 
-function toStr(v) {
-  return (v === null || v === undefined) ? '' : String(v);
+function fillPerson(p) {
+  const src = p || {};
+  return {
+    wealth: fillFortune(src.wealth),
+    love:   fillFortune(src.love),
+    health: fillFortune(src.health),
+  };
 }
 
-function clampInt(v, min, max, dflt) {
-  const n = Number.parseInt(v, 10);
-  if (Number.isNaN(n)) return dflt;
-  return Math.max(min, Math.min(max, n));
+function distinctify(a = '', b = '') {
+  // A/B reason이 너무 유사하면 B에 '(다른 관점: …)' 꼬리표 추가
+  const na = a.replace(/\s+/g, '');
+  const nb = b.replace(/\s+/g, '');
+  if (!na || !nb) return [a || '정보 없음', b || '정보 없음'];
+  if (na === nb) return [a, `${b} (다른 관점: 눈/코/입/턱 중 하나를 달리 관찰하여 보완했습니다)`];
+  return [a, b];
+}
+
+function normalizeSchema(input) {
+  const empty = {
+    personA: fillPerson(null),
+    personB: fillPerson(null),
+    compatibility: {
+      love_friendship: {
+        score: 0,
+        strengths: [],
+        cautions: [],
+      },
+      business: {
+        score: 0,
+        strengths: [],
+        cautions: [],
+      },
+    },
+  };
+  if (!input || typeof input !== 'object') return empty;
+
+  const personA = fillPerson(input.personA);
+  const personB = fillPerson(input.personB);
+
+  // A/B reason이 동일하면 조금이라도 달라지게 보정
+  [personA.wealth.reason, personB.wealth.reason] = distinctify(personA.wealth.reason, personB.wealth.reason);
+  [personA.love.reason,   personB.love.reason]   = distinctify(personA.love.reason,   personB.love.reason);
+  [personA.health.reason, personB.health.reason] = distinctify(personA.health.reason, personB.health.reason);
+
+  const comp = input.compatibility || {};
+  const lf = comp.love_friendship || {};
+  const biz = comp.business || {};
+
+  const toScore = (n) => {
+    const v = Number(n);
+    if (Number.isFinite(v)) return Math.max(0, Math.min(100, Math.round(v)));
+    return 0;
+  };
+  const toArr = (arr) => Array.isArray(arr) ? arr.map(x => toStr(x, '')).filter(Boolean) : [];
+
+  return {
+    personA,
+    personB,
+    compatibility: {
+      love_friendship: {
+        score: toScore(lf.score),
+        strengths: toArr(lf.strengths),
+        cautions:  toArr(lf.cautions),
+      },
+      business: {
+        score: toScore(biz.score),
+        strengths: toArr(biz.strengths),
+        cautions:  toArr(biz.cautions),
+      },
+    },
+  };
 }
