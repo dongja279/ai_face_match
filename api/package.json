@@ -1,8 +1,5 @@
 {
-  "name": "ai-face-match",
-  "version": "1.0.0",
-  "private": true,
   "dependencies": {
-    "@vercel/kv": "latest"
+    "@vercel/kv": "^0.2.3"
   }
 }
