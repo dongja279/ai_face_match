@@ -7,7 +7,7 @@
   <style>
     :root{
       --bg:#f2f4f8; --ink:#101828; --muted:#667085;
-      --panel:#ffffff; --line:#e5e7eb; --chip:#f3f4f6;
+      --panel:#ffffff; --line:#e5e7eb;
       --accent:#6ea8ff; --accent2:#7c6dff; --ok:#10b981; --dark:#0b1220;
     }
     *{box-sizing:border-box}
@@ -33,21 +33,14 @@
     .thumb.has-image{border:1px solid #1f2937}
     .thumb.has-image img{display:block}
 
-    /* 업로드 버튼 : 반응형 사이즈/텍스트 */
+    /* 업로드 버튼(반응형 텍스트) */
     .pick{
-      position:absolute;left:50%;bottom:10%;
-      transform:translateX(-50%);
-      width:min(86%,300px);
-      height:auto;
-      border:none;border-radius:14px;cursor:pointer;
-      font-weight:900;letter-spacing:.2px;
-      font-size:clamp(14px, 3.4vw, 18px);
-      line-height:1.2;
-      padding:clamp(12px, 3.4vw, 16px) 12px;
-      color:#fff;
-      background:linear-gradient(135deg,var(--accent),var(--accent2));
-      box-shadow:0 10px 24px rgba(0,0,0,.25);
-      white-space:nowrap; /* 기본은 한 줄로 */
+      position:absolute;left:50%;bottom:10%;transform:translateX(-50%);
+      width:min(86%,300px);border:none;border-radius:14px;cursor:pointer;
+      font-weight:900;letter-spacing:.2px;font-size:clamp(14px,3.4vw,18px);
+      line-height:1.2;padding:clamp(12px,3.4vw,16px) 12px;color:#fff;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 10px 24px rgba(0,0,0,.25);
+      white-space:nowrap;
     }
     .thumb.has-image .pick{display:none}
     .replace{
@@ -70,10 +63,6 @@
     /* 결과 가독성 */
     .result{display:grid;gap:12px}
     .section{border:1px solid #2a364a;border-radius:14px;background:#0b1220;color:#eef4ff;padding:14px}
-    .score{display:flex;align-items:center;gap:12px}
-    .badge{min-width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-      background:linear-gradient(135deg,#6ea8ff,#7c6dff);color:#fff;font-weight:900;font-size:20px;box-shadow:0 8px 22px rgba(0,0,0,.35)}
-    .pill{padding:6px 10px;border-radius:999px;background:#0b1220;border:1px solid #2a364a;color:#dbe7ff;font-size:12px}
     .pair{display:grid;grid-template-columns:1fr;gap:12px}
     @media(min-width:640px){ .pair{grid-template-columns:1fr 1fr} }
     .who{border:1px solid #2a364a;border-radius:12px;background:#0b1220;color:#eef4ff;padding:12px}
@@ -81,6 +70,14 @@
     .list{margin:8px 0 0 0;padding:0 0 0 16px}
     .list li{margin:4px 0;color:#e6eeff}
     .list li b{color:#ffffff}
+
+    .scoreRow{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:640px){ .scoreRow{grid-template-columns:1fr 1fr} }
+    .scoreCard{border:1px solid #2a364a;border-radius:12px;background:#0b1220;color:#eef4ff;padding:12px}
+    .scoreTitle{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .badge{min-width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(135deg,#6ea8ff,#7c6dff);color:#fff;font-weight:900;font-size:18px;box-shadow:0 8px 22px rgba(0,0,0,.35)}
+    .pill{padding:6px 10px;border-radius:999px;background:#0b1220;border:1px solid #2a364a;color:#dbe7ff;font-size:12px}
   </style>
 </head>
 <body>
@@ -135,7 +132,6 @@
   </div>
 
   <script>
-    // ===== DOM =====
     const q = id => document.getElementById(id);
     const fileA=q('fileA'), fileB=q('fileB');
     const pickA=q('pickA'), pickB=q('pickB'), repA=q('replaceA'), repB=q('replaceB');
@@ -143,46 +139,35 @@
     const bar=q('bar'), statusEl=q('status'), out=q('out');
     const imgPA=q('imgPreviewA'), imgPB=q('imgPreviewB');
     const thumbA=q('thumbA'), thumbB=q('thumbB');
+    let imgA=null, imgB=null;
 
-    // 내부 상태
-    let imgA=null, imgB=null, busy=false;
-
-    // 반응형 라벨: 화면 폭에 따라 텍스트 자동 최적화
     function relabel(){
       const w = window.innerWidth;
-      const a = w < 340 ? '👤 A 업로드'
-            : w < 390 ? '👤 A 사진 선택'
-            : '👤 A 사진 업로드';
-      const b = w < 340 ? '👤 B 업로드'
-            : w < 390 ? '👤 B 사진 선택'
-            : '👤 B 사진 업로드';
-      pickA.textContent = a; pickB.textContent = b;
-      // 아주 좁은 화면에서는 줄바꿈 허용
+      const a = w < 340 ? '👤 A 업로드' : w < 390 ? '👤 A 사진 선택' : '👤 A 사진 업로드';
+      const b = w < 340 ? '👤 B 업로드' : w < 390 ? '👤 B 사진 선택' : '👤 B 사진 업로드';
+      pickA.textContent=a; pickB.textContent=b;
       const wrap = w < 330;
-      pickA.style.whiteSpace = wrap ? 'normal' : 'nowrap';
-      pickB.style.whiteSpace = wrap ? 'normal' : 'nowrap';
+      pickA.style.whiteSpace=wrap?'normal':'nowrap';
+      pickB.style.whiteSpace=wrap?'normal':'nowrap';
     }
     window.addEventListener('resize', relabel);
     document.addEventListener('DOMContentLoaded', relabel);
 
-    // 업로드 트리거
-    pickA.onclick = () => fileA.click();
-    pickB.onclick = () => fileB.click();
-    repA.onclick  = () => fileA.click();
-    repB.onclick  = () => fileB.click();
+    pickA.onclick=()=>fileA.click();
+    pickB.onclick=()=>fileB.click();
+    repA.onclick =()=>fileA.click();
+    repB.onclick =()=>fileB.click();
 
-    // 파일 선택 → 압축 → 미리보기
     fileA.onchange=e=>readPreview(e.target.files?.[0],'A');
     fileB.onchange=e=>readPreview(e.target.files?.[0],'B');
 
-    async function readPreview(file, who){
+    async function readPreview(file,who){
       if(!file) return;
       const base64 = await toDataURL(file);
       const compressed = await compress(base64);
-      if(who==='A'){ imgA = compressed; imgPA.src = compressed; thumbA.classList.add('has-image'); }
-      else { imgB = compressed; imgPB.src = compressed; thumbB.classList.add('has-image'); }
+      if(who==='A'){ imgA=compressed; imgPA.src=compressed; thumbA.classList.add('has-image'); }
+      else { imgB=compressed; imgPB.src=compressed; thumbB.classList.add('has-image'); }
     }
-
     function toDataURL(file){
       return new Promise((resolve,reject)=>{
         const r=new FileReader();
@@ -195,21 +180,20 @@
       return new Promise(resolve=>{
         const img=new Image();
         img.onload=()=>{
-          const max=540; const scale=Math.min(1, max/Math.max(img.width,img.height));
-          const c=document.createElement('canvas'); c.width=img.width*scale; c.height=img.height*scale;
-          const ctx=c.getContext('2d'); ctx.drawImage(img,0,0,c.width,c.height);
+          const max=540; const s=Math.min(1, max/Math.max(img.width,img.height));
+          const c=document.createElement('canvas'); c.width=img.width*s; c.height=img.height*s;
+          c.getContext('2d').drawImage(img,0,0,c.width,c.height);
           resolve(c.toDataURL('image/jpeg',0.85));
         };
         img.src=src;
       });
     }
 
-    // 분석 실행
     analyze.onclick=async()=>{
       if(!imgA||!imgB){ alert('A, B 사진을 모두 업로드해 주세요.'); return; }
       try{
         setBusy(true,'관상궁합 분석 중…'); out.innerHTML='<div class="muted">분석 중…</div>';
-        const res=await fetch('/api/match',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ imgA, imgB }) });
+        const res=await fetch('/api/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imgA,imgB})});
         if(!res.ok){ const t=await res.text(); throw new Error(`HTTP ${res.status}: ${t}`); }
         const d=await res.json();
         out.innerHTML = renderHTML(d);
@@ -218,7 +202,6 @@
       finally{ setBusy(false); }
     };
 
-    // 결과 복사
     copyBtn.onclick=async()=>{
       try{
         const plain = out.innerText.trim();
@@ -230,80 +213,77 @@
     };
 
     function setBusy(b,msg){
-      busy=b; statusEl.textContent=b?(msg||'분석 중…'):'대기 중…';
+      statusEl.textContent=b?(msg||'분석 중…'):'대기 중…';
       bar.style.width=b?'70%':'0%';
       [analyze,pickA,pickB,repA,repB,copyBtn].forEach(el=>el.disabled=b);
     }
 
-    /* ===== 결과 렌더링 ===== */
+    /* ===== 새 구조 렌더링 ===== */
     function renderHTML(d){
-      const safe = v => (v==null?'':String(v));
-      const list = arr => {
-        if(!arr) return '';
-        const a = Array.isArray(arr) ? arr : [arr];
-        return a.filter(Boolean).map(x=>`<li>${safe(x)}</li>`).join('');
-      };
-      const featureList = obj => {
-        if(!obj) return '';
-        const m = {
-          face_shape:'얼굴형', forehead:'이마', eyebrows:'눈썹', eyes:'눈', nose:'코',
-          mouth_lips:'입/입술', ears:'귀', jaw_chin:'턱/턱선', skin_expression:'피부/표정'
-        };
-        return Object.entries(obj)
-          .filter(([,v])=>v!=null && String(v).trim()!=='')
-          .map(([k,v])=>`<li><b>${m[k]||k}</b>: ${safe(v)}</li>`).join('');
-      };
+      const S = s=> (s??'').toString();
+      const L = a => (Array.isArray(a)?a:[a]).filter(Boolean).map(x=>`<li>${S(x)}</li>`).join('');
 
-      const score = `
-        <div class="section">
-          <div class="score">
-            <div class="badge">${d.score ?? '?'}</div>
-            <div>
-              <div><b>✨ 궁합 점수</b></div>
-              <div class="pill">${safe(d.score_reason)||'점수 근거: 사진에서 관찰된 요소 기반 요약'}</div>
-            </div>
-          </div>
+      const fortune = f => !f ? '' : `
+        <div style="margin-top:8px">
+          <div class="pill">재물운</div>
+          <div style="margin-top:6px">${S(f.wealth?.summary)}</div>
+          ${f.wealth?.tips?`<ul class="list">${L(f.wealth.tips)}</ul>`:''}
+          <div class="pill" style="margin-top:10px">연애운</div>
+          <div style="margin-top:6px">${S(f.love?.summary)}</div>
+          ${f.love?.tips?`<ul class="list">${L(f.love.tips)}</ul>`:''}
+          <div class="pill" style="margin-top:10px">건강운</div>
+          <div style="margin-top:6px">${S(f.health?.summary)}</div>
+          ${f.health?.tips?`<ul class="list">${L(f.health.tips)}</ul>`:''}
         </div>`;
 
-      const A = d.personA||d.person1||{};
-      const B = d.personB||d.person2||{};
-
-      const person = (label, data) => {
-        const featuresBlock = data.features
-          ? featureList(data.features)
-          : featureList({
-              face_shape:data.face_shape, forehead:data.forehead, eyebrows:data.eyebrows, eyes:data.eyes,
-              nose:data.nose, mouth_lips:data.mouth||data.mouth_lips, ears:data.ears, jaw_chin:data.jaw_chin, skin_expression:data.skin_expression
-            });
+      const person = (label, p) => {
+        if(!p) return '';
+        const feat = p.features||{};
+        const featList = [
+          ['얼굴형',feat.face_shape],['이마',feat.forehead],['눈썹',feat.eyebrows],['눈',feat.eyes],
+          ['코',feat.nose],['입/입술',feat.mouth_lips||p.mouth],['귀',feat.ears],['턱/턱선',feat.jaw_chin],['피부/표정',feat.skin_expression]
+        ].filter(([,v])=>v).map(([k,v])=>`<li><b>${k}</b>: ${S(v)}</li>`).join('');
         return `
           <div class="who">
             <h4>${label}</h4>
-            ${data.summary?`<div>${safe(data.summary)}</div>`:''}
-            ${featuresBlock?`<ul class="list">${featuresBlock}</ul>`:''}
-            ${data.analysis?`<div style="margin-top:6px"><b>풀이:</b> ${safe(data.analysis)}</div>`:''}
+            ${p.summary?`<div>${S(p.summary)}</div>`:''}
+            ${featList?`<ul class="list">${featList}</ul>`:''}
+            ${p.analysis?`<div style="margin-top:6px"><b>풀이:</b> ${S(p.analysis)}</div>`:''}
+            ${fortune(p.fortune)}
           </div>`;
       };
 
       const individuals = `
         <div class="section">
-          <h3>👥 개인별 관상 특징</h3>
+          <h3>👥 개인별 관상 특징 & 운세</h3>
           <div class="pair">
-            ${person('A', A)}
-            ${person('B', B)}
+            ${person('A', d.personA||d.person1)}
+            ${person('B', d.personB||d.person2)}
           </div>
         </div>`;
 
-      const compat = d.compatibility||{};
-      const compatHTML = `
-        <div class="section">
-          <h3>🔗 궁합 해석</h3>
-          ${compat.summary?`<div style="margin-bottom:6px">${safe(compat.summary)}</div>`:''}
-          ${compat.strengths?`<div style="margin-top:8px"><b>🤝 잘 맞는 점</b><ul class="list">${list(compat.strengths)}</ul></div>`:''}
-          ${compat.cautions?`<div style="margin-top:8px"><b>⚠️ 조심해야 할 점</b><ul class="list">${list(compat.cautions)}</ul></div>`:''}
-          ${compat.tips?`<div style="margin-top:8px"><b>💡 Tip</b><ul class="list">${list(compat.tips)}</ul></div>`:''}
+      const c = d.compatibility||{};
+      const block = (title, obj) => !obj ? '' : `
+        <div class="scoreCard">
+          <div class="scoreTitle">
+            <b>${title}</b>
+            <div class="badge">${obj.score ?? '?'}</div>
+          </div>
+          ${obj.summary?`<div class="pill" style="display:inline-block;margin-bottom:8px">${S(obj.summary)}</div>`:''}
+          ${obj.strengths?`<div><b>• 잘 맞는 점</b><ul class="list">${L(obj.strengths)}</ul></div>`:''}
+          ${obj.cautions?`<div style="margin-top:6px"><b>• 조심해야 할 점</b><ul class="list">${L(obj.cautions)}</ul></div>`:''}
         </div>`;
 
-      return `${score}${individuals}${compatHTML}`;
+      const compat = `
+        <div class="section">
+          <h3>🔗 궁합 해석</h3>
+          <div class="scoreRow">
+            ${block('1) 연애/우정', c.romance_friendship)}
+            ${block('2) 비즈니스', c.business)}
+          </div>
+        </div>`;
+
+      return `${individuals}${compat}`;
     }
   </script>
 </body>
