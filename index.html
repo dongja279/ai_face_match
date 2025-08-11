@@ -5,257 +5,256 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>AI 관상궁합</title>
 <style>
-  /* ===== Color tokens (대비 강화) ===== */
   :root{
-    --bg:#070b13;
-    --panel:#0d1422;
-    --panel2:#0a111d;
-    --ink:#ffffff;              /* 본문: 순백 */
-    --muted:#d6e2f5;            /* 보조: 더 진하게 */
-    --line:#203050;
-    --chip:#152540;
-    --g1:#7c3aed; --g2:#06b6d4; --ok:#16a085;
-    --shadow:0 10px 28px rgba(0,0,0,.35);
+    --bg:#0b1220; --panel:#0f1629; --ink:#ebf1ff; --muted:#9fb0c8; --line:#1c2942;
+    --accent1:#6c5ce7; --accent2:#00d2ff; --good:#22c55e; --warn:#f59e0b; --bad:#ef4444;
   }
-  @media (prefers-color-scheme: light){
-    :root{
-      --bg:#f6f8fc;
-      --panel:#ffffff; --panel2:#fefefe;
-      --ink:#091220;
-      --muted:#2a3c58;
-      --line:#dae4f3; --chip:#eef4ff;
-      --g1:#6d28d9; --g2:#0891b2; --ok:#118a77;
-      --shadow:0 10px 24px rgba(10,25,60,.09);
-    }
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Apple SD Gothic Neo,Noto Sans KR,Helvetica,Arial}
+  .wrap{max-width:980px;margin:0 auto;padding:16px}
+  header{display:flex;gap:12px;align-items:center;margin:6px 0 18px}
+  header .logo{width:40px;height:40px;border-radius:12px;background:conic-gradient(from 180deg,var(--accent1),var(--accent2))}
+  header h1{margin:0;font-size:22px}
+  header p{margin:0;color:var(--muted);font-size:13px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:16px}
+  .grid{display:grid;gap:16px}
+  @media(min-width:800px){.grid.up{grid-template-columns:1fr 1fr}}
+  .slot{background:#0b1326;border:1px dashed #2a3a61;border-radius:14px;position:relative;overflow:hidden}
+  .slot img{display:block;width:100%;height:auto}
+  .slot .btn{
+    position:absolute;left:50%;bottom:12px;transform:translateX(-50%);
+    background:linear-gradient(135deg,var(--accent1),var(--accent2));
+    color:#fff;border:none;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer
   }
-
-  /* ===== Base ===== */
-  *,*::before,*::after{box-sizing:border-box}
-  body{
-    margin:0;background:var(--bg);color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,"Noto Sans KR",Segoe UI,Roboto,Helvetica,Arial;
-    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  .actions{display:flex;gap:12px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+  .btn{
+    background:#15223c;border:1px solid #23345a;color:var(--ink);border-radius:12px;padding:14px 18px;font-weight:800;cursor:pointer
   }
-  .wrap{max-width:1040px;margin:0 auto;padding:20px}
-  header{display:flex;gap:16px;align-items:center;margin:6px 0 18px}
-  .logo{width:46px;height:46px;border-radius:50%;
-        background:conic-gradient(from 140deg,var(--g1),var(--g2));box-shadow:var(--shadow)}
-  h1{margin:0;font-size:clamp(26px,5vw,42px);letter-spacing:-.6px;line-height:1.06}
-  .sub{margin-top:8px;color:var(--muted);font-weight:700;font-size:clamp(14px,2.9vw,16px)}
-
-  .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));
-         border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-  @media(max-width:760px){.row{grid-template-columns:1fr}}
-
-  /* ===== Upload slots ===== */
-  .slot{position:relative;min-height:300px;border:1px solid var(--line);
-        border-radius:16px;background:#0b1221;overflow:hidden;
-        display:flex;align-items:end;justify-content:center;padding:16px}
-  .slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-  .label{position:absolute;left:10px;top:10px;background:var(--chip);color:#eef6ff;
-         border:1px solid #ffffff3a;padding:6px 10px;border-radius:999px;font-weight:900;font-size:12px}
-  input[type=file]{display:none}
-  .btn-up{position:relative;z-index:2;border:none;cursor:pointer;min-height:52px;
-          padding:15px 18px;border-radius:13px;font-weight:900;color:#fff;
-          background:linear-gradient(135deg,var(--g1),var(--g2));
-          width:min(90%,380px);box-shadow:0 10px 22px rgba(50,30,130,.35);font-size:16px}
-
-  /* ===== Status & actions ===== */
-  .meter{height:10px;background:#0c1730;border-radius:999px;overflow:hidden;border:1px solid #ffffff24}
-  .meter>div{height:100%;width:0%;background:linear-gradient(90deg,#22d3ee,#a78bfa,#22c55e)}
-  .muted{color:var(--muted)!important;font-weight:800}
-
-  .actions{display:flex;flex-direction:column;align-items:center;gap:12px;margin:18px 0 8px}
-  .btn{width:100%;max-width:600px;border:none;border-radius:14px;padding:17px 20px;
-       font-weight:900;cursor:pointer;font-size:clamp(16px,3.8vw,18px)}
-  .btn.primary{color:#fff;background:linear-gradient(135deg,var(--g1),var(--g2));box-shadow:0 12px 26px rgba(86,46,200,.36)}
-  .btn.success{color:#fff;background:var(--ok);box-shadow:0 12px 24px rgba(22,160,133,.34)}
+  .btn.primary{background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff;border:none}
   .btn:disabled{opacity:.6;cursor:not-allowed}
-
-  /* ===== Result ===== */
-  h3{margin:0 0 12px;font-size:clamp(19px,4.5vw,24px);letter-spacing:-.2px}
-  h4{margin:0 0 10px;font-size:clamp(17px,4vw,20px)}
-  .section{background:linear-gradient(180deg,var(--panel),var(--panel2));
-           border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:16px;box-shadow:var(--shadow)}
-  .who{border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:12px;background:#0f1b35cc}
-  .pill{display:inline-block;font-size:13px;background:var(--chip);color:#f4fbff;
-        padding:7px 11px;border-radius:999px;border:1px solid #ffffff3d;font-weight:900}
-  .list{padding-left:20px;margin:10px 0}
-  .score{display:flex;gap:12px;align-items:center}
-  .dot{width:72px;height:72px;border-radius:50%;
-       background:radial-gradient(circle at 30% 30%,#b9c4ff,#7c3aed);
-       display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:22px}
-  .kv{margin-top:10px;line-height:1.65;font-size:16.5px}     /* 본문 더 큼 */
-
-  b,strong{color:var(--ink);font-weight:900}
-
-  footer{margin:28px 0 10px;color:var(--muted);text-align:center}
-  a.mail{color:#9ed2ff;text-decoration:none}
+  /* 진행률 */
+  .progress{width:100%;height:14px;background:#0e1a33;border:1px solid #23345a;border-radius:999px;overflow:hidden;margin:10px 0 4px}
+  .bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent2),var(--accent1));display:flex;align-items:center;justify-content:center;color:#001426;font-size:11px;font-weight:800;transition:width .25s}
+  .ptext{color:var(--muted);font-size:12px;text-align:center;margin:0 0 2px}
+  /* 결과 */
+  .section{background:#0c152b;border:1px solid #23345a;border-radius:14px;padding:14px;margin-top:12px}
+  .title{display:flex;align-items:center;gap:10px;margin:0 0 10px;font-size:18px}
+  .pill{display:inline-block;background:#0f1f3e;border:1px solid #213761;border-radius:999px;padding:4px 10px;font-weight:700;margin-right:8px}
+  .scoreWrap{display:flex;align-items:center;gap:12px}
+  .badge{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent2),var(--accent1));font-size:20px;font-weight:900}
+  ul.clean{margin:6px 0 0 20px}
+  ul.clean li{margin:4px 0}
+  footer{margin:18px 0;color:#9fb0c8;font-size:12px;text-align:center}
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="logo" aria-hidden="true"></div>
-      <div>
-        <h1>AI 관상궁합</h1>
-        <div class="sub">두 사람의 얼굴 사진을 업로드하면, 심층 궁합 분석을 제공합니다. <span style="opacity:.95">(재미로만 보세요!)</span></div>
+<div class="wrap">
+  <header>
+    <div class="logo" aria-hidden="true"></div>
+    <div>
+      <h1>AI 관상궁합</h1>
+      <p>두 사람의 얼굴 사진을 업로드하면, 심층 궁합 분석을 제공합니다. (재미로만 보세요!)</p>
+    </div>
+  </header>
+
+  <!-- 업로드 -->
+  <div class="card">
+    <h3 style="margin:0 0 10px">사진 업로드</h3>
+    <div class="grid up">
+      <div class="slot" id="slotA">
+        <img id="imgA" alt="A 미리보기" style="display:none">
+        <input id="fileA" type="file" accept="image/*" capture="environment" hidden>
+        <button class="btn" id="btnA">A 사진 업로드</button>
       </div>
-    </header>
-
-    <section class="panel">
-      <h3>사진 업로드</h3>
-      <div class="row" style="margin-top:12px">
-        <div class="slot">
-          <span class="label">A</span>
-          <img id="imgPrevA" alt="" style="display:none">
-          <input id="fileA" type="file" accept="image/*" />
-          <button id="btnA" class="btn-up">A 사진 업로드</button>
-        </div>
-        <div class="slot">
-          <span class="label">B</span>
-          <img id="imgPrevB" alt="" style="display:none">
-          <input id="fileB" type="file" accept="image/*" />
-          <button id="btnB" class="btn-up">B 사진 업로드</button>
-        </div>
+      <div class="slot" id="slotB">
+        <img id="imgB" alt="B 미리보기" style="display:none">
+        <input id="fileB" type="file" accept="image/*" capture="environment" hidden>
+        <button class="btn" id="btnB">B 사진 업로드</button>
       </div>
+    </div>
 
-      <div style="margin-top:16px">
-        <div class="meter"><div id="bar"></div></div>
-        <div id="status" class="muted" style="margin-top:8px">대기 중…</div>
-      </div>
+    <!-- 진행률 바 -->
+    <div class="progress"><div id="pbar" class="bar">0%</div></div>
+    <p id="ptext" class="ptext">대기 중…</p>
 
-      <div class="actions">
-        <button id="analyze" class="btn primary">🔮 관상궁합 분석하기</button>
-        <button id="shareBtn" class="btn success" disabled>📋 분석 결과 복사하기(링크)</button>
-      </div>
-    </section>
-
-    <div id="out"></div>
-
-    <footer>✉️ 문의: <a class="mail" href="mailto:dongja279@gmail.com">dongja279@gmail.com</a></footer>
+    <!-- 액션 버튼(가운데 정렬) -->
+    <div class="actions">
+      <button id="analyze" class="btn primary" disabled>🔮 관상궁합 분석하기</button>
+      <button id="share" class="btn" disabled>📋 분석 결과 복사하기(링크)</button>
+    </div>
   </div>
 
+  <!-- 결과 -->
+  <div id="result"></div>
+
+  <footer>✉️ 문의: <a href="mailto:dongja279@gmail.com" style="color:#a7c8ff">dongja279@gmail.com</a></footer>
+</div>
+
 <script>
-/* ===== DOM & state ===== */
-const fileA=document.getElementById('fileA'), fileB=document.getElementById('fileB');
-const btnA=document.getElementById('btnA'), btnB=document.getElementById('btnB');
-const prevA=document.getElementById('imgPrevA'), prevB=document.getElementById('imgPrevB');
-const bar=document.getElementById('bar'), statusEl=document.getElementById('status');
-const analyzeBtn=document.getElementById('analyze'), shareBtn=document.getElementById('shareBtn');
-const out=document.getElementById('out');
-let imgA=null,imgB=null,lastResult=null;
+  // ===== 미리보기/업로드 =====
+  const imgAEl = document.getElementById('imgA');
+  const imgBEl = document.getElementById('imgB');
+  const fileA = document.getElementById('fileA');
+  const fileB = document.getElementById('fileB');
+  const btnA = document.getElementById('btnA');
+  const btnB = document.getElementById('btnB');
+  const analyzeBtn = document.getElementById('analyze');
+  const shareBtn = document.getElementById('share');
+  const resultEl = document.getElementById('result');
 
-/* ===== helpers ===== */
-const toDataURL=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f);});
-btnA.onclick=()=>fileA.click(); btnB.onclick=()=>fileB.click();
-fileA.onchange=async e=>{const f=e.target.files?.[0]; if(!f) return; imgA=await toDataURL(f); prevA.src=imgA; prevA.style.display='block';}
-fileB.onchange=async e=>{const f=e.target.files?.[0]; if(!f) return; imgB=await toDataURL(f); prevB.src=imgB; prevB.style.display='block';}
+  let imgAData = null;
+  let imgBData = null;
 
-/* ===== analyze ===== */
-analyzeBtn.onclick=async()=>{
-  if(!imgA||!imgB){ alert('A, B 사진을 모두 업로드해 주세요.'); return; }
-  try{
-    analyzeBtn.disabled=true; shareBtn.disabled=true;
-    statusEl.textContent='분석중…'; bar.style.width='65%';
+  btnA.onclick = ()=> fileA.click();
+  btnB.onclick = ()=> fileB.click();
 
-    // “근거 = 구체 관상 특징”을 강제하는 힌트(서버가 활용하면 품질↑)
-    const promptHints = `
-- '근거'에는 최소 2~3개의 구체 관상 특징을 적으세요 (예: 이마가 넓고 매끈함, 콧대가 곧고 콧끝이 둥글다, 눈꼬리가 약간 올라가 밝은 인상, 입꼬리 상승, 귓불이 두툼, 턱선이 부드럽다/각지다 등).
-- '결론'은 그 관상 특징이 왜 해당 운(재물/연애/건강)으로 연결되는지 한 문장으로 요약.
-- 팁은 1~2개 간단 실천문.
-- 중복 표현 금지. A와 B의 근거는 서로 다른 특징을 사용.
-`;
+  fileA.onchange = async(e)=> { imgAData = await readAsDataURL(e.target.files[0]); setPreview(imgAEl, imgAData); gate(); };
+  fileB.onchange = async(e)=> { imgBData = await readAsDataURL(e.target.files[0]); setPreview(imgBEl, imgBData); gate(); };
 
-    const r=await fetch('/api/match',{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ imgA, imgB, promptHints })
-    });
-    if(!r.ok) throw new Error(await r.text());
-    const data=await r.json();
-
-    // 프론트 “안전문구 fallback” 제거: 모델이 안 주면 그대로 비워둠 (중복문구 방지)
-    lastResult=data;
-    out.innerHTML=renderAll(data);
-    statusEl.textContent='분석완료!'; bar.style.width='100%';
-    shareBtn.disabled=false;
-    window.scrollTo({top:out.offsetTop-10,behavior:'smooth'});
-  }catch(e){
-    alert('분석 중 오류가 발생했습니다.'); statusEl.textContent='오류'; bar.style.width='0%';
-  }finally{
-    analyzeBtn.disabled=false;
+  function setPreview(imgEl, data){
+    imgEl.src = data; imgEl.style.display='block';
   }
-};
+  function readAsDataURL(f){
+    return new Promise((res,rej)=>{ if(!f){res(null);return;}
+      const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f);
+    });
+  }
+  function gate(){ analyzeBtn.disabled = !(imgAData && imgBData); }
 
-/* ===== share short link ===== */
-shareBtn.onclick=async()=>{
-  try{
-    if(!lastResult){ alert('먼저 분석을 완료해 주세요.'); return; }
-    const r=await fetch('/api/share',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({result:lastResult})});
-    if(!r.ok) throw new Error(await r.text());
-    const {id}=await r.json();
-    const url=`${location.origin}/v?id=${id}`;
-    await navigator.clipboard.writeText(url);
-    shareBtn.textContent='✅ 링크 복사됨';
-    setTimeout(()=>shareBtn.textContent='📋 분석 결과 복사하기(링크)',1200);
-    if(navigator.share){ try{ await navigator.share({title:'AI 관상궁합 결과',url}); }catch{} }
-  }catch(e){ alert('링크 생성 실패: '+(e?.message||e)); }
-};
+  // ===== 진행률 UI =====
+  const pbar = document.getElementById('pbar');
+  const ptext = document.getElementById('ptext');
+  function progress(p, msg){
+    const v = Math.max(0, Math.min(100, Math.round(p)));
+    pbar.style.width = v + '%';
+    pbar.textContent = v + '%';
+    ptext.textContent = msg || '';
+  }
+  function lockUI(on){
+    [btnA,btnB,analyzeBtn,shareBtn,fileA,fileB].forEach(el=> el.disabled = on ? true : false);
+  }
 
-/* ===== renderers ===== */
-const S=v=>v==null?'':String(v);
-const L=a=>(Array.isArray(a)?a:[a]).filter(Boolean).map(x=>`<li>${S(x)}</li>`).join('');
+  // ===== 분석 버튼 =====
+  analyzeBtn.onclick = async () => {
+    if(!imgAData || !imgBData) return;
+    try{
+      lockUI(true);
+      progress(10, '이미지 준비 중…');
+      await sleep(200);
 
-function fortuneBox(title,f){
-  if(!f) return '';
-  return `
-    <div class="section">
-      <span class="pill">${title}</span>
-      ${f.reason  ? `<div class="kv"><strong>근거:</strong> ${S(f.reason)}</div>` : ''}
-      ${f.verdict ? `<div class="kv"><strong>결론:</strong> ${S(f.verdict)}</div>` : ''}
-      ${(f.tips&&f.tips.length)? `<ul class="list">${L(f.tips)}</ul>`:''}
-    </div>`;
-}
-function personBlock(label,p){
-  const F=p?.fortune||{};
-  return `<div class="who">
-    <h4>${label}</h4>
-    ${fortuneBox('재물운', F.wealth)}
-    ${fortuneBox('연애운', F.love)}
-    ${fortuneBox('건강운', F.health)}
-  </div>`;
-}
-function compatBlock(title,data){
-  return `<div class="section">
-    <div class="score"><div class="dot">${S(data?.score??0)}</div><h3 style="margin:0">${title}</h3></div>
-    <div class="kv" style="margin-top:10px"><strong>잘 맞는 점</strong></div>
-    <ul class="list">${L(data?.strengths||[])}</ul>
-    <div class="kv" style="margin-top:6px"><strong>조심해야 할 점</strong></div>
-    <ul class="list">${L(data?.cautions||[])}</ul>
-  </div>`;
-}
-function renderAll(d){
-  return `
-    <div class="section"><h3>👤 개인별 관상 특징 & 운세</h3>
-      ${personBlock('A', d.personA||{})}
-      ${personBlock('B', d.personB||{})}
-    </div>
-    ${compatBlock('💖 연애/우정', d?.compatibility?.love_friendship||{})}
-    ${compatBlock('💼 비즈니스', d?.compatibility?.business||{})}
-  `;
-}
+      progress(20, '이미지 업로드 중…');
+      await sleep(200);
 
-/* ===== open shared link ===== */
-(()=>{ const id=new URLSearchParams(location.search).get('id');
-  if(!id) return;
-  fetch(`/api/get?id=${encodeURIComponent(id)}`).then(r=>r.ok?r.json():Promise.reject())
-  .then(d=>{ lastResult=d; out.innerHTML=renderAll(d);
-    document.querySelector('.panel').style.display='none';
-    statusEl.textContent='분석완료!'; bar.style.width='100%';
-    window.scrollTo({top:out.offsetTop-10,behavior:'smooth'}); })
-  .catch(()=>{});
-})();
+      progress(35, 'AI 요청 구성 중…');
+      const payload = { imgA: imgAData, imgB: imgBData };
+      await sleep(150);
+
+      progress(55, 'AI가 관상을 세밀 분석 중… (잠시만요)');
+      const res = await fetch('/api/match', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+      });
+
+      progress(75, '결과 정리 중…');
+      if(!res.ok){
+        const e = await res.text().catch(()=> 'Server error');
+        throw new Error(e || ('HTTP '+res.status));
+      }
+      const data = await res.json();
+
+      progress(95, '렌더링…');
+      render(data);
+      progress(100, '분석완료!');
+      shareBtn.disabled = false;
+    }catch(err){
+      alert('분석 중 오류가 발생했습니다.');
+      console.error(err);
+    }finally{
+      lockUI(false);
+    }
+  };
+
+  // ===== 공유(링크 복사) =====
+  shareBtn.onclick = async ()=>{
+    try{
+      const url = window.location.href; // (KV 링크를 쓰는 버전이라면 여기서 생성한 링크를 사용)
+      await navigator.clipboard.writeText(url);
+      shareBtn.textContent = '✅ 링크 복사됨';
+      setTimeout(()=>shareBtn.textContent='📋 분석 결과 복사하기(링크)',1200);
+    }catch{
+      alert('클립보드 복사가 차단되었습니다. 주소창의 링크를 복사해 주세요.');
+    }
+  };
+
+  // ===== 결과 렌더링 =====
+  function render(d){
+    // 안전 접근 헬퍼
+    const s = (v)=> v==null ? '' : String(v);
+    const list = (arr)=> (arr||[]).map(t=>`<li>${s(t)}</li>`).join('');
+
+    resultEl.innerHTML = `
+      <div class="card">
+        <h3 class="title">👤 개인별 관상 특징 & 운세</h3>
+        <div class="section"><div class="pill">A</div>
+          ${personBlock(d.personA)}
+        </div>
+        <div class="section"><div class="pill">B</div>
+          ${personBlock(d.personB)}
+        </div>
+      </div>
+
+      ${compatBlock('💖 연애/우정', d.compatibility?.love_friendship)}
+      ${compatBlock('💼 비즈니스', d.compatibility?.business)}
+    `;
+  }
+
+  function personBlock(p){
+    if(!p) return '<div class="muted">데이터 없음</div>';
+    return `
+      <div class="section">
+        <div class="pill">재물운</div>
+        <div><b>근거:</b> ${escapeHTML(p.wealth?.reason||'')}</div>
+        <div><b>결론:</b> ${escapeHTML(p.wealth?.verdict||'')}</div>
+        ${tipsList(p.wealth?.tips)}
+      </div>
+      <div class="section">
+        <div class="pill">연애운</div>
+        <div><b>근거:</b> ${escapeHTML(p.love?.reason||'')}</div>
+        <div><b>결론:</b> ${escapeHTML(p.love?.verdict||'')}</div>
+        ${tipsList(p.love?.tips)}
+      </div>
+      <div class="section">
+        <div class="pill">건강운</div>
+        <div><b>근거:</b> ${escapeHTML(p.health?.reason||'')}</div>
+        <div><b>결론:</b> ${escapeHTML(p.health?.verdict||'')}</div>
+        ${tipsList(p.health?.tips)}
+      </div>
+    `;
+  }
+  function tipsList(arr){
+    if(!arr || !arr.length) return '';
+    return `<ul class="clean">${arr.map(t=>`<li>${escapeHTML(t)}</li>`).join('')}</ul>`;
+  }
+  function compatBlock(title, data){
+    if(!data) return '';
+    return `
+      <div class="card">
+        <div class="title">
+          <div class="badge">${Number(data.score||0)}</div>
+          <div>${title}</div>
+        </div>
+        <div class="section">
+          <div class="pill">잘 맞는 점</div>
+          <ul class="clean">${(data.strengths||[]).map(t=>`<li>${escapeHTML(t)}</li>`).join('')}</ul>
+        </div>
+        <div class="section">
+          <div class="pill">조심해야 할 점</div>
+          <ul class="clean">${(data.cautions||[]).map(t=>`<li>${escapeHTML(t)}</li>`).join('')}</ul>
+        </div>
+      </div>
+    `;
+  }
+
+  function escapeHTML(str){ return s(str).replace(/[&<>"']/g,m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+  function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 </script>
 </body>
 </html>
