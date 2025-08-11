@@ -21,7 +21,7 @@
     .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
     .card h2{margin:0 0 12px;font-size:15px;color:#475467}
 
-    /* 썸네일 업로드 카드 */
+    /* 업로드 카드 */
     .thumbs{display:grid;grid-template-columns:1fr;gap:12px}
     @media(min-width:640px){ .thumbs{grid-template-columns:1fr 1fr} }
     .thumb{
@@ -33,7 +33,7 @@
     .thumb.has-image{border:1px solid #1f2937}
     .thumb.has-image img{display:block}
 
-    /* 업로드 버튼(반응형 텍스트) */
+    /* 업로드 버튼(반응형 라벨) */
     .pick{
       position:absolute;left:50%;bottom:10%;transform:translateX(-50%);
       width:min(86%,300px);border:none;border-radius:14px;cursor:pointer;
@@ -57,10 +57,13 @@
     .btn{cursor:pointer;border:none;border-radius:14px;padding:16px 14px;font-weight:900;letter-spacing:.2px;font-size:16px}
     .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
     .btn-outline{background:#0ea5a5;color:#fff}
+    .btn-dark{background:#0b1626;color:#e6eeff}
+    .btn-cta{background:#111827;color:#fff}
+
     .btn:disabled{opacity:.6;cursor:not-allowed}
     .muted{color:var(--muted);font-size:12px}
 
-    /* 결과 가독성 */
+    /* 결과 */
     .result{display:grid;gap:12px}
     .section{border:1px solid #2a364a;border-radius:14px;background:#0b1220;color:#eef4ff;padding:14px}
     .pair{display:grid;grid-template-columns:1fr;gap:12px}
@@ -78,6 +81,7 @@
     .badge{min-width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;
       background:linear-gradient(135deg,#6ea8ff,#7c6dff);color:#fff;font-weight:900;font-size:18px;box-shadow:0 8px 22px rgba(0,0,0,.35)}
     .pill{padding:6px 10px;border-radius:999px;background:#0b1220;border:1px solid #2a364a;color:#dbe7ff;font-size:12px}
+    .sharePanel{display:grid;gap:8px;margin-top:10px}
   </style>
 </head>
 <body>
@@ -88,7 +92,7 @@
     </header>
 
     <!-- 업로드 -->
-    <section class="card">
+    <section class="card" id="uploadCard">
       <h2>사진 업로드</h2>
 
       <div class="thumbs">
@@ -113,18 +117,23 @@
 
       <div class="actions">
         <button id="analyze" class="btn btn-primary">🔮 관상궁합 분석하기</button>
-        <button id="copy" class="btn btn-outline">📋 분석 결과 복사하기</button>
+        <button id="share" class="btn btn-outline">🔗 결과 링크 복사</button>
       </div>
     </section>
 
     <!-- 결과 -->
-    <section class="card">
+    <section class="card" id="resultCard">
       <h2>결과</h2>
       <div id="out" class="result">
         <div class="muted">아직 결과가 없습니다.</div>
       </div>
-      <div class="muted" style="margin-top:6px">(※ 오락/참고용 결과입니다. 사진은 저장되지 않습니다.)</div>
 
+      <!-- 공유 페이지에서 보이는 CTA -->
+      <div id="shareCta" class="sharePanel" style="display:none">
+        <a class="btn btn-cta" href="./" style="text-align:center;text-decoration:none">🎁 무료로 AI 관상 궁합 해보기</a>
+      </div>
+
+      <div class="muted" style="margin-top:6px">(※ 오락/참고용 결과입니다. 사진은 저장되지 않습니다.)</div>
       <p style="text-align:center; font-size:12.5px; color:#8a94a7; margin:14px 0 4px">
         ✉️ 문의: <a href="mailto:dongja279@gmail.com" style="color:inherit">dongja279@gmail.com</a>
       </p>
@@ -132,27 +141,30 @@
   </div>
 
   <script>
+    /* ---------- DOM/상태 ---------- */
     const q = id => document.getElementById(id);
     const fileA=q('fileA'), fileB=q('fileB');
     const pickA=q('pickA'), pickB=q('pickB'), repA=q('replaceA'), repB=q('replaceB');
-    const analyze=q('analyze'), copyBtn=q('copy');
+    const analyze=q('analyze'), shareBtn=q('share');
     const bar=q('bar'), statusEl=q('status'), out=q('out');
     const imgPA=q('imgPreviewA'), imgPB=q('imgPreviewB');
     const thumbA=q('thumbA'), thumbB=q('thumbB');
-    let imgA=null, imgB=null;
+    const uploadCard=q('uploadCard'), shareCta=q('shareCta');
+    let imgA=null, imgB=null, lastResult=null;
 
+    /* ---------- 반응형 업로드 라벨 ---------- */
     function relabel(){
       const w = window.innerWidth;
-      const a = w < 340 ? '👤 A 업로드' : w < 390 ? '👤 A 사진 선택' : '👤 A 사진 업로드';
-      const b = w < 340 ? '👤 B 업로드' : w < 390 ? '👤 B 사진 선택' : '👤 B 사진 업로드';
-      pickA.textContent=a; pickB.textContent=b;
+      pickA.textContent = w<340?'👤 A 업로드': w<390?'👤 A 사진 선택':'👤 A 사진 업로드';
+      pickB.textContent = w<340?'👤 B 업로드': w<390?'👤 B 사진 선택':'👤 B 사진 업로드';
       const wrap = w < 330;
-      pickA.style.whiteSpace=wrap?'normal':'nowrap';
-      pickB.style.whiteSpace=wrap?'normal':'nowrap';
+      pickA.style.whiteSpace = wrap?'normal':'nowrap';
+      pickB.style.whiteSpace = wrap?'normal':'nowrap';
     }
     window.addEventListener('resize', relabel);
     document.addEventListener('DOMContentLoaded', relabel);
 
+    /* ---------- 업로드 트리거 ---------- */
     pickA.onclick=()=>fileA.click();
     pickB.onclick=()=>fileB.click();
     repA.onclick =()=>fileA.click();
@@ -170,10 +182,7 @@
     }
     function toDataURL(file){
       return new Promise((resolve,reject)=>{
-        const r=new FileReader();
-        r.onload=()=>resolve(r.result);
-        r.onerror=reject;
-        r.readAsDataURL(file);
+        const r=new FileReader(); r.onload=()=>resolve(r.result); r.onerror=reject; r.readAsDataURL(file);
       });
     }
     function compress(src){
@@ -189,102 +198,59 @@
       });
     }
 
+    /* ---------- 분석 실행 ---------- */
     analyze.onclick=async()=>{
       if(!imgA||!imgB){ alert('A, B 사진을 모두 업로드해 주세요.'); return; }
       try{
-        setBusy(true,'관상궁합 분석 중…'); out.innerHTML='<div class="muted">분석 중…</div>';
+        setBusy(true); statusEl.textContent='분석중…';
+        out.innerHTML='<div class="muted">분석중…</div>';
         const res=await fetch('/api/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imgA,imgB})});
         if(!res.ok){ const t=await res.text(); throw new Error(`HTTP ${res.status}: ${t}`); }
         const d=await res.json();
+        lastResult=d;
         out.innerHTML = renderHTML(d);
-        bar.style.width='100%'; statusEl.textContent='완료!';
-      }catch(e){ out.innerHTML=`<div class="section">에러: ${e?.message||e}</div>`; }
-      finally{ setBusy(false); }
+        bar.style.width='100%'; statusEl.textContent='분석완료!';
+      }catch(e){
+        out.innerHTML=`<div class="section">에러: ${e?.message||e}</div>`;
+        statusEl.textContent='분석 실패';
+      }finally{ setBusy(false); }
     };
 
-    copyBtn.onclick=async()=>{
-      try{
-        const plain = out.innerText.trim();
-        if(!plain){ alert('복사할 결과가 없습니다.'); return; }
-        await navigator.clipboard.writeText(plain);
-        copyBtn.textContent='✅ 복사됨';
-        setTimeout(()=>copyBtn.textContent='📋 분석 결과 복사하기',1200);
-      }catch(_){ alert('복사 권한을 확인해주세요.');}
-    };
-
-    function setBusy(b,msg){
-      statusEl.textContent=b?(msg||'분석 중…'):'대기 중…';
+    function setBusy(b){
       bar.style.width=b?'70%':'0%';
-      [analyze,pickA,pickB,repA,repB,copyBtn].forEach(el=>el.disabled=b);
+      [analyze,pickA,pickB,repA,repB,shareBtn].forEach(el=>el.disabled=b);
     }
 
-    /* ===== 새 구조 렌더링 ===== */
-    function renderHTML(d){
-      const S = s=> (s??'').toString();
-      const L = a => (Array.isArray(a)?a:[a]).filter(Boolean).map(x=>`<li>${S(x)}</li>`).join('');
+    /* ---------- 결과 공유 (링크) ---------- */
+    shareBtn.onclick = async () => {
+      try{
+        if(!lastResult){ alert('먼저 분석을 완료해 주세요.'); return; }
+        const url = makeShareURL(lastResult);
+        await copyText(url);
+        shareBtn.textContent='✅ 링크 복사됨';
+        setTimeout(()=>shareBtn.textContent='🔗 결과 링크 복사',1200);
+        if(navigator.share){ try{ await navigator.share({title:'AI 관상궁합 결과', url}); }catch{} }
+      }catch{ alert('링크 복사에 실패했습니다.'); }
+    };
 
-      const fortune = f => !f ? '' : `
-        <div style="margin-top:8px">
-          <div class="pill">재물운</div>
-          <div style="margin-top:6px">${S(f.wealth?.summary)}</div>
-          ${f.wealth?.tips?`<ul class="list">${L(f.wealth.tips)}</ul>`:''}
-          <div class="pill" style="margin-top:10px">연애운</div>
-          <div style="margin-top:6px">${S(f.love?.summary)}</div>
-          ${f.love?.tips?`<ul class="list">${L(f.love.tips)}</ul>`:''}
-          <div class="pill" style="margin-top:10px">건강운</div>
-          <div style="margin-top:6px">${S(f.health?.summary)}</div>
-          ${f.health?.tips?`<ul class="list">${L(f.health.tips)}</ul>`:''}
-        </div>`;
-
-      const person = (label, p) => {
-        if(!p) return '';
-        const feat = p.features||{};
-        const featList = [
-          ['얼굴형',feat.face_shape],['이마',feat.forehead],['눈썹',feat.eyebrows],['눈',feat.eyes],
-          ['코',feat.nose],['입/입술',feat.mouth_lips||p.mouth],['귀',feat.ears],['턱/턱선',feat.jaw_chin],['피부/표정',feat.skin_expression]
-        ].filter(([,v])=>v).map(([k,v])=>`<li><b>${k}</b>: ${S(v)}</li>`).join('');
-        return `
-          <div class="who">
-            <h4>${label}</h4>
-            ${p.summary?`<div>${S(p.summary)}</div>`:''}
-            ${featList?`<ul class="list">${featList}</ul>`:''}
-            ${p.analysis?`<div style="margin-top:6px"><b>풀이:</b> ${S(p.analysis)}</div>`:''}
-            ${fortune(p.fortune)}
-          </div>`;
-      };
-
-      const individuals = `
-        <div class="section">
-          <h3>👥 개인별 관상 특징 & 운세</h3>
-          <div class="pair">
-            ${person('A', d.personA||d.person1)}
-            ${person('B', d.personB||d.person2)}
-          </div>
-        </div>`;
-
-      const c = d.compatibility||{};
-      const block = (title, obj) => !obj ? '' : `
-        <div class="scoreCard">
-          <div class="scoreTitle">
-            <b>${title}</b>
-            <div class="badge">${obj.score ?? '?'}</div>
-          </div>
-          ${obj.summary?`<div class="pill" style="display:inline-block;margin-bottom:8px">${S(obj.summary)}</div>`:''}
-          ${obj.strengths?`<div><b>• 잘 맞는 점</b><ul class="list">${L(obj.strengths)}</ul></div>`:''}
-          ${obj.cautions?`<div style="margin-top:6px"><b>• 조심해야 할 점</b><ul class="list">${L(obj.cautions)}</ul></div>`:''}
-        </div>`;
-
-      const compat = `
-        <div class="section">
-          <h3>🔗 궁합 해석</h3>
-          <div class="scoreRow">
-            ${block('1) 연애/우정', c.romance_friendship)}
-            ${block('2) 비즈니스', c.business)}
-          </div>
-        </div>`;
-
-      return `${individuals}${compat}`;
+    function makeShareURL(obj){
+      const json = JSON.stringify(obj);
+      const b64 = btoa(unescape(encodeURIComponent(json))); // UTF-8 safe
+      return `${location.origin}${location.pathname}?r=${encodeURIComponent(b64)}`;
     }
-  </script>
-</body>
-</html>
+    function parseShare(){
+      const p = new URLSearchParams(location.search);
+      const r = p.get('r'); if(!r) return null;
+      try{ return JSON.parse(decodeURIComponent(escape(atob(r)))); }catch{return null;}
+    }
+    async function copyText(t){ await navigator.clipboard.writeText(t); }
+
+    // 공유 URL로 진입 시 읽기 전용 렌더
+    (function bootFromShare(){
+      const data = parseShare();
+      if(!data) return;
+      lastResult=data;
+      uploadCard.style.display='none';           // 업로드 숨김
+      shareCta.style.display='grid';             // CTA 노출
+      out.innerHTML = renderHTML(data);
+      statusEl
