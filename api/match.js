@@ -1,87 +1,87 @@
 // /api/match.js
-import OpenAI from "openai";
-
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  const { imgA, imgB } = req.body;
-  if (!imgA || !imgB) {
-    return res.status(400).json({ error: "두 장의 이미지 데이터가 필요합니다." });
-  }
-
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const prompt = `
-당신은 세계 최고의 관상학자입니다.
-다음 두 사람의 얼굴 이미지를 보고 매우 상세한 관상 궁합 분석을 해주세요.
-결과는 JSON 형식으로만 출력합니다. 아래 형식과 키 이름을 반드시 지켜주세요.
+    const { imgA, imgB } = req.body || {};
+    if (!imgA || !imgB) return res.status(400).json({ error: 'imgA and imgB are required' });
+    if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error: 'OPENAI_API_KEY is missing' });
+
+    // 전문가 컨설팅 톤 + 디테일 + 강점/주의/팁 + 점수 근거
+    const system = [
+      '당신은 세계 최고 수준의 관상학자이자 얼굴 분석 컨설턴트다.',
+      '이 서비스는 오락/참고용이며, 모든 해석은 존중의 언어로 제시한다. 차별적/단정적 표현은 금지.',
+      '사진에서 관찰 가능한 요소(얼굴형, 이마, 눈썹, 눈, 코, 입/입술, 귀, 턱/턱선, 피부/표정)를 근거로 디테일을 우선 설명한다.',
+      '각 개인은 요약 → 부위별 특징 → 관상 풀이 순으로 작성한다.',
+      '두 사람의 궁합은 강점/주의/실천 팁을 구체적으로 제시하며, 점수(0~100)와 간단한 근거를 포함한다.',
+      '항상 JSON 객체로만 응답한다. 한글 사용.'
+    ].join('\n');
+
+    const schemaText = `
+아래 스키마의 JSON만 반환하세요. 키 이름을 반드시 지키세요.
 
 {
-  "score": (0~100 사이 정수),
-  "score_reason": "점수의 근거 설명",
+  "score": number,                 // 0~100
+  "score_reason": string,          // 점수 산출 근거(핵심)
   "person1": {
-    "overall": "총평",
-    "face_shape": "얼굴형",
-    "forehead": "이마 특징",
-    "eyebrows": "눈썹 특징",
-    "eyes": "눈 특징",
-    "nose": "코 특징",
-    "mouth": "입/입술 특징",
-    "ears": "귀 특징",
-    "jaw_chin": "턱/턱선 특징",
-    "skin_expression": "피부/표정 특징",
-    "analysis": "관상 풀이"
+    "overall": string,
+    "face_shape": string, "forehead": string, "eyebrows": string, "eyes": string,
+    "nose": string, "mouth": string, "ears": string, "jaw_chin": string, "skin_expression": string,
+    "analysis": string
   },
   "person2": {
-    "overall": "총평",
-    "face_shape": "얼굴형",
-    "forehead": "이마 특징",
-    "eyebrows": "눈썹 특징",
-    "eyes": "눈 특징",
-    "nose": "코 특징",
-    "mouth": "입/입술 특징",
-    "ears": "귀 특징",
-    "jaw_chin": "턱/턱선 특징",
-    "skin_expression": "피부/표정 특징",
-    "analysis": "관상 풀이"
+    "overall": string,
+    "face_shape": string, "forehead": string, "eyebrows": string, "eyes": string,
+    "nose": string, "mouth": string, "ears": string, "jaw_chin": string, "skin_expression": string,
+    "analysis": string
   },
   "compatibility": {
-    "summary": "궁합 해석 요약",
-    "strengths": ["서로 잘 맞는 점 1", "서로 잘 맞는 점 2", "서로 잘 맞는 점 3"],
-    "cautions": ["조심해야 할 점 1", "조심해야 할 점 2"],
-    "tips": ["좋은 관계 유지를 위한 팁 1", "좋은 관계 유지를 위한 팁 2"]
+    "summary": string,
+    "strengths": string[],
+    "cautions": string[],
+    "tips": string[]
   }
-}
+}`;
 
-사진은 다음과 같습니다.
-A 사진: ${imgA}
-B 사진: ${imgB}
-`;
-
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+    const payload = {
+      model: 'gpt-4o-mini',
+      temperature: 0.35,
+      response_format: { type: 'json_object' },
       messages: [
-        { role: "system", content: "당신은 세계 최고의 관상학자입니다. 반드시 JSON만 반환하세요." },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.7
+        { role: 'system', content: system },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: schemaText },
+            { type: 'text', text: '다음 두 정면 얼굴 사진을 분석하세요. JSON만 반환합니다.' },
+            { type: 'image_url', image_url: { url: imgA } },
+            { type: 'image_url', image_url: { url: imgB } }
+          ]
+        }
+      ]
+    };
+
+    const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify(payload)
     });
 
-    // 응답 텍스트를 JSON으로 파싱
-    let parsed;
-    try {
-      parsed = JSON.parse(completion.choices[0].message.content);
-    } catch (err) {
-      return res.status(500).json({ error: "AI 응답 파싱 실패", raw: completion.choices[0].message.content });
+    if (!r.ok) {
+      const t = await r.text();
+      return res.status(500).json({ error: 'OpenAI error', detail: t });
     }
 
-    res.status(200).json(parsed);
+    const data = await r.json();
+    let json = {};
+    try { json = JSON.parse(data?.choices?.[0]?.message?.content || '{}'); }
+    catch { json = { error: 'Invalid JSON from model' }; }
+    return res.status(200).json(json);
 
-  } catch (error) {
-    console.error("API Error:", error);
-    res.status(500).json({ error: "서버 에러 발생" });
+  } catch (e) {
+    return res.status(500).json({ error: e?.message || 'Unknown error' });
   }
 }
