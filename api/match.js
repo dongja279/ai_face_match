@@ -7,17 +7,17 @@ export default async function handler(req, res) {
     if (!imgA || !imgB) return res.status(400).json({ error: 'imgA and imgB are required' });
     if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error: 'OPENAI_API_KEY is missing' });
 
-    // ✅ 세계 최고 관상학자 톤 + 안전/윤리 고지 + 세부 부위 분석 + 궁합 강점/주의/팁
+    // 유료 컨설팅급 톤 + 근거 기반 + 세부 부위 + 강점/주의/팁 + 점수 근거
     const system = [
-      '당신은 세계 최고 수준의 관상학자이자 얼굴 분석 전문가다.',
-      '다만 관상 해석은 어디까지나 오락/참고용이며, 사람에 대한 차별적/단정적 서술을 피하고 존중하는 어휘를 사용한다.',
-      '두 사람의 정면 얼굴 사진을 바탕으로 각 개인의 관상 특징과 풀이를 상세히 기술하고, 두 사람의 궁합을 점수(0~100)와 함께 설명한다.',
-      '반드시 아래 JSON 스키마를 충실히 채운다. 한글로 답하되, 간결하지만 전문적인 톤을 유지한다.',
-      '가능하면 사진에서 관찰 가능한 근거(눈 크기·쌍커풀·코 산·입꼬리·귀 윤곽·턱선 등)를 근거로 든다.',
-      '점수는 0~100 사이 정수로 제시하고, 점수 산출 근거를 짧게 요약한다.'
+      '당신은 세계 최고 수준의 관상학자이자 얼굴 분석 컨설턴트다.',
+      '이 서비스는 오락/참고용이며, 모든 해석은 존중의 언어로 제시한다. 차별적/단정적 표현은 금지.',
+      '사진에서 관찰 가능한 요소(얼굴형, 이마, 눈썹, 눈, 코, 입/입술, 귀, 턱/턱선, 피부/표정)를 근거로 객관적인 디테일을 우선 제시한다.',
+      '각 개인에 대해 요약 → 부위별 특징 → 관상학적 풀이 순으로 작성한다.',
+      '두 사람의 궁합은 장점(강점), 주의점(조심할 점), 실천 팁을 구체적으로 제시한다.',
+      '궁합 점수(0~100)는 과신을 피하고, 간단한 산출 근거를 함께 제공한다.',
+      '항상 JSON 객체로만 응답한다. 한글 사용.'
     ].join('\n');
 
-    // 응답 형식(객체 강제)
     const payload = {
       model: 'gpt-4o-mini',
       temperature: 0.3,
@@ -28,35 +28,27 @@ export default async function handler(req, res) {
           role: 'user',
           content: [
             { type: 'text', text:
-`아래 두 얼굴 이미지를 바탕으로 JSON만 반환해.
-스키마:
+`아래 두 정면 얼굴 사진을 분석해 다음 스키마의 JSON만 반환하세요.
+
 {
   "score": number,                 // 0~100
-  "score_reason": string,          // 점수 근거
+  "score_reason": string,          // 점수 산출 근거(핵심 요약)
   "personA": {
-    "summary": string,             // 인상 요약
+    "summary": string,
     "features": {
-      "face_shape": string,        // 얼굴형
-      "forehead": string,          // 이마
-      "eyebrows": string,          // 눈썹
-      "eyes": string,              // 눈
-      "nose": string,              // 코
-      "mouth_lips": string,        // 입/입술
-      "ears": string,              // 귀
-      "jaw_chin": string,          // 턱/턱선
-      "skin_expression": string    // 피부/표정 인상
+      "face_shape": string, "forehead": string, "eyebrows": string, "eyes": string,
+      "nose": string, "mouth_lips": string, "ears": string, "jaw_chin": string, "skin_expression": string
     },
-    "analysis": string             // 관상학적 풀이
+    "analysis": string
   },
   "personB": { ... personA와 동일 구조 ... },
   "compatibility": {
-    "strengths": string[],         // 서로 잘 맞는 점
-    "cautions": string[],          // 조심해야 할 점
+    "strengths": string[],         // 잘 맞는 점(구체)
+    "cautions": string[],          // 조심해야 할 점(구체)
     "summary": string,             // 종합 해석
-    "tips": string[]               // 실천 팁
+    "tips": string[]               // 관계에 도움이 되는 실천 팁
   }
-}`
-            },
+}` },
             { type: 'image_url', image_url: { url: imgA } },
             { type: 'image_url', image_url: { url: imgB } }
           ]
