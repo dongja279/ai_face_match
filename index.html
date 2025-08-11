@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI 관상궁합 — 두 사진으로 보는 우리 사이</title>
+  <style>
+    :root{ --bg:#0e1116; --panel:#141922; --panel2:#0f1520; --ink:#e8eef7; --muted:#9fb1c8; --line:#1f2937; --chip:#1b2230; --accent:#8b5cf6; --accent2:#06b6d4; }
+    @media (prefers-color-scheme: light){ :root{ --bg:#f7f9fc; --panel:#ffffff; --panel2:#ffffff; --ink:#202734; --muted:#667085; --line:#e7edf5; --chip:#f2f6fc; --accent:#6d28d9; --accent2:#0891b2; }}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,Helvetica,Arial}
+    header{position:sticky;top:0;z-index:10;background:linear-gradient(90deg,#131a25cc,#0f1520cc);border-bottom:1px solid #ffffff14;color:#fff;backdrop-filter:blur(8px)}
+    .container{max-width:1100px;margin:0 auto;padding:16px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:36px;height:36px;border-radius:50%;background:conic-gradient(from 140deg,var(--accent),var(--accent2))}
+    .brand h1{margin:0;font-size:18px}
+    .brand small{display:block;color:#cfe1ff}
+    main{max-width:1100px;margin:20px auto;padding:0 16px;display:grid;gap:16px}
+    .grid{display:grid;gap:16px} @media(min-width:980px){.grid{grid-template-columns:390px 1fr}}
+    .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:16px;padding:16px}
+    .panel h2{margin:0 0 10px;color:#b8c3d6;font-size:14px}
+    .uploader{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width:560px){ .uploader{grid-template-columns:1fr} }
+    .btn{cursor:pointer;border:none;border-radius:12px;padding:12px 14px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .soft{background:var(--chip);border:1px solid var(--line);color:var(--ink)}
+    .meter{height:8px;background:#0f1623;border-radius:999px;overflow:hidden;border:1px solid #ffffff16;margin-top:10px}
+    .meter>div{height:100%;width:0%;background:linear-gradient(90deg,#22d3ee,#a78bfa,#22c55e)}
+    .thumbs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+    .box{border:1px dashed #89a3c91f;border-radius:14px;min-height:160px;display:flex;align-items:center;justify-content:center;background:#0f172a;color:#94a3b8}
+    .thumbs img{width:100%;border-radius:12px;display:block}
+    .result{white-space:pre-wrap;background:#0f1623;color:#e7efff;border:1px solid #ffffff17;border-radius:14px;padding:16px;margin-top:12px}
+    footer{max-width:1100px;margin:18px auto 30px;padding:0 16px;color:var(--muted);font-size:12px;text-align:center}
+    footer a{color:inherit}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1>AI 관상궁합</h1>
+        <small>두 사람의 얼굴 사진으로 보는 우리 사이 — 재미로만 보세요!</small>
+      </div>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="panel">
+      <h2>사진 업로드</h2>
+      <div class="uploader">
+        <div>
+          <input id="fileA" type="file" accept="image/*" hidden>
+          <button id="btnA" class="btn" type="button">👤 A 사진 업로드</button>
+        </div>
+        <div>
+          <input id="fileB" type="file" accept="image/*" hidden>
+          <button id="btnB" class="btn" type="button">👤 B 사진 업로드</button>
+        </div>
+      </div>
+      <div class="meter"><div id="bar"></div></div>
+      <div id="status" style="color:var(--muted);font-size:12px;margin-top:6px">대기 중…</div>
+      <div class="thumbs">
+        <div class="box" id="boxA">A 미리보기</div>
+        <div class="box" id="boxB">B 미리보기</div>
+      </div>
+      <button id="analyze" class="btn" style="width:100%;margin-top:12px">🔮 관상궁합 분석하기</button>
+      <button id="demo" class="soft" style="width:100%;margin-top:8px">💾 데모 이미지로 테스트</button>
+    </section>
+
+    <section class="panel">
+      <h2>결과</h2>
+      <div id="out" class="result">아직 결과가 없습니다.</div>
+    </section>
+  </main>
+
+  <footer>문의: <a href="mailto:dongja279@gmail.com">dongja279@gmail.com</a></footer>
+
+  <script>
+    const q = id => document.getElementById(id);
+    const fileA=q('fileA'), fileB=q('fileB');
+    const btnA=q('btnA'), btnB=q('btnB'), analyze=q('analyze'), demo=q('demo');
+    const boxA=q('boxA'), boxB=q('boxB'), out=q('out');
+    const bar=q('bar'), statusEl=q('status');
+
+    let imgA=null, imgB=null, busy=false;
+
+    btnA.onclick=()=>fileA.click();
+    btnB.onclick=()=>fileB.click();
+
+    fileA.onchange=e=>readAndPreview(e.target.files?.[0],'A');
+    fileB.onchange=e=>readAndPreview(e.target.files?.[0],'B');
+
+    demo.onclick=()=>{
+      // 64x64 샘플 얼굴 실루엣 (작은 내장 PNG) — 데모/네트워크 불필요
+      const demoA='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAQAAACq...';
+      const demoB='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAQAAACq...';
+      imgA=demoA; imgB=demoB; preview(demoA,'A'); preview(demoB,'B');
+    };
+
+    function setBusy(b,msg){ busy=b; statusEl.textContent=b?(msg||'분석 중…'):'대기 중…'; bar.style.width=b?'70%':'0%'; analyze.disabled=b; btnA.disabled=b; btnB.disabled=b; }
+
+    function readAndPreview(file,who){ if(!file) return; const r=new FileReader(); r.onload=ev=>{ const src=ev.target.result; compressToCanvas(src, who); }; r.readAsDataURL(file); }
+
+    function compressToCanvas(src,who){
+      const img=new Image(); img.onload=()=>{
+        const max=420; const scale=Math.min(1, max/Math.max(img.width,img.height));
+        const c=document.createElement('canvas'); c.width=img.width*scale; c.height=img.height*scale; const ctx=c.getContext('2d');
+        ctx.drawImage(img,0,0,c.width,c.height);
+        const data=c.toDataURL('image/jpeg',0.85);
+        if(who==='A'){ imgA=data; } else { imgB=data; }
+        preview(data,who);
+      }; img.src=src;
+    }
+
+    function preview(data,who){ const el=who==='A'?boxA:boxB; el.innerHTML=''; const im=new Image(); im.src=data; im.style.borderRadius='12px'; im.style.width='100%'; el.appendChild(im); }
+
+    analyze.onclick=async()=>{
+      if(!imgA||!imgB){ alert('A, B 사진을 모두 업로드해 주세요.'); return; }
+      try{
+        setBusy(true,'관상궁합 분석 중…'); out.textContent='';
+        const res=await fetch('/api/match',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ imgA, imgB })});
+        if(!res.ok){ const t=await res.text(); throw new Error(`HTTP ${res.status}: ${t}`); }
+        const data=await res.json();
+        out.innerHTML = renderResult(data);
+        bar.style.width='100%'; statusEl.textContent='완료!';
+      }catch(e){ out.textContent='에러: '+(e?.message||e); }
+      finally{ setBusy(false); }
+    };
+
+    function renderResult(d){
+      // 기대 스키마: { score, personA:{traits,analysis}, personB:{traits,analysis}, compatibility:{summary,tips} }
+      const lines=[];
+      lines.push(`✨ 궁합 점수: <b>${d.score ?? '?'} / 100</b>`);
+      lines.push('\n—— 개인별 관상 특징 —————————————————');
+      lines.push(`A) ${d.personA?.traits||''}`); if(d.personA?.analysis) lines.push(`- 풀이: ${d.personA.analysis}`);
+      lines.push(`\nB) ${d.personB?.traits||''}`); if(d.personB?.analysis) lines.push(`- 풀이: ${d.personB.analysis}`);
+      lines.push('\n—— 궁합 해석 ————————————————————');
+      if(d.compatibility?.summary) lines.push(d.compatibility.summary);
+      if(d.compatibility?.tips) lines.push(`\nTip: ${d.compatibility.tips}`);
+      lines.push('\n(※ 오락용/참고용)');
+      return lines.join('\n');
+    }
+  </script>
+</body>
+</html>
