@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AI 관상궁합 — 공유 결과</title>
+  <style>
+    :root{
+      --bg:#0b1220; --panel:#0f1629; --ink:#eaf1ff; --muted:#9fb3d1;
+      --line:#1b2942; --accent:#8b5cf6; --accent2:#22d3ee; --chip:#152138;
+      --good:#22c55e; --warn:#f59e0b;
+    }
+    body{margin:0;background:var(--bg);color:var(--ink);
+      font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,"Apple SD Gothic Neo","Noto Sans KR";}
+    .wrap{max-width:900px;margin:24px auto;padding:0 16px}
+    .card{background:linear-gradient(180deg,var(--panel),#0c1426);
+      border:1px solid var(--line);border-radius:18px;padding:16px;margin:14px 0}
+    h1{font-size:22px;margin:0 0 6px}
+    .muted{color:var(--muted)}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:var(--chip);border:1px solid var(--line);font-size:12px}
+    .score{display:flex;align-items:center;gap:14px}
+    .badge{width:62px;height:62px;border-radius:50%;
+      background:radial-gradient(60% 60% at 30% 30%, #a78bfa, #22d3ee);display:flex;align-items:center;justify-content:center;
+      color:#fff;font-size:22px;font-weight:800;border:1px solid #ffffff22}
+    .title{font-size:18px;font-weight:800}
+    .two{display:grid;gap:14px}
+    @media(min-width:720px){ .two{grid-template-columns:1fr 1fr} }
+    ul{margin:8px 0 0 18px}
+    li{margin:6px 0}
+    .cta{display:block;text-align:center;padding:14px 18px;border-radius:12px;margin-top:8px;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;text-decoration:none;font-weight:800}
+    .footer{margin:20px 0;color:#a6b7d3;text-align:center;font-size:13px}
+    .hidden{display:none}
+    .err{color:#ffb4b4}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>AI 관상궁합 — 공유 결과</h1>
+      <div class="muted">친구에게 공유된 관상 궁합 리포트입니다. (오락/참고용)</div>
+    </div>
+
+    <div id="loading" class="card">불러오는 중…</div>
+    <div id="error" class="card err hidden"></div>
+
+    <div id="content" class="hidden">
+      <!-- 하이라이트 -->
+      <div class="card">
+        <div class="title">결과 하이라이트</div>
+        <div id="loveBox" class="card" style="margin:12px 0 0">
+          <div class="score">
+            <div class="badge" id="loveScore">—</div>
+            <div>
+              <div class="title">💖 연애/우정 궁합</div>
+              <div class="muted" id="loveSummary">—</div>
+            </div>
+          </div>
+          <div class="two" style="margin-top:10px">
+            <div>
+              <span class="pill">잘 맞는 점</span>
+              <ul id="loveStrengths"></ul>
+            </div>
+            <div>
+              <span class="pill">조심해야 할 점</span>
+              <ul id="loveCautions"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div id="bizBox" class="card" style="margin-top:10px">
+          <div class="score">
+            <div class="badge" id="bizScore">—</div>
+            <div>
+              <div class="title">💼 비즈니스 궁합</div>
+              <div class="muted" id="bizSummary">—</div>
+            </div>
+          </div>
+          <div class="two" style="margin-top:10px">
+            <div>
+              <span class="pill">잘 맞는 점</span>
+              <ul id="bizStrengths"></ul>
+            </div>
+            <div>
+              <span class="pill">조심해야 할 점</span>
+              <ul id="bizCautions"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 개인별 운세 -->
+      <div class="card">
+        <div class="title">개인별 관상 특징 & 운세</div>
+        <div class="two" id="persons"></div>
+      </div>
+
+      <a class="cta" href="/">무료로 AI 관상궁합 해보기</a>
+    </div>
+
+    <div class="footer">© 2025 AI 관상궁합</div>
+  </div>
+
+  <script>
+    function q(sel){ return document.querySelector(sel) }
+    function el(tag, cls){ const x=document.createElement(tag); if(cls) x.className=cls; return x }
+    function getId(){
+      const u=new URL(location.href);
+      return u.searchParams.get('id') || location.pathname.split('/').filter(Boolean).pop();
+    }
+    function fillList(ul, arr){ ul.innerHTML=''; (arr||[]).forEach(t=>{ const li=el('li'); li.textContent=t; ul.appendChild(li); }) }
+
+    async function main(){
+      const id = getId();
+      if(!id){ q('#loading').classList.add('hidden'); q('#error').classList.remove('hidden'); q('#error').textContent='잘못된 링크입니다.'; return }
+
+      try{
+        const r = await fetch('/api/get?id='+encodeURIComponent(id));
+        if(!r.ok){ throw new Error('결과를 찾을 수 없습니다.') }
+        const data = await r.json(); // {type, result}
+
+        const { result } = data;
+
+        // 하이라이트
+        q('#loveScore').textContent = (result?.compatibility?.love_friendship?.score ?? '—');
+        q('#loveSummary').textContent = result?.compatibility?.love_friendship?.summary || '';
+        fillList(q('#loveStrengths'), result?.compatibility?.love_friendship?.strengths);
+        fillList(q('#loveCautions'),  result?.compatibility?.love_friendship?.cautions);
+
+        q('#bizScore').textContent = (result?.compatibility?.business?.score ?? '—');
+        q('#bizSummary').textContent = result?.compatibility?.business?.summary || '';
+        fillList(q('#bizStrengths'), result?.compatibility?.business?.strengths);
+        fillList(q('#bizCautions'),  result?.compatibility?.business?.cautions);
+
+        // 개인별
+        const persons = q('#persons'); persons.innerHTML='';
+        ['personA','personB'].forEach((key, idx)=>{
+          const p = result?.[key];
+          if(!p) return;
+          const box = el('div','card');
+          const name = idx===0 ? 'A' : 'B';
+          box.innerHTML = `
+            <div class="title">${name}</div>
+            <div class="card" style="margin-top:8px">
+              <span class="pill">재물운</span>
+              <div><b>근거:</b> ${p?.fortune?.wealth?.reason || '-'}</div>
+              <div><b>결론:</b> ${p?.fortune?.wealth?.verdict || '-'}</div>
+              <ul>${(p?.fortune?.wealth?.tips||[]).map(t=>`<li>${t}</li>`).join('')}</ul>
+            </div>
+            <div class="card" style="margin-top:8px">
+              <span class="pill">연애운</span>
+              <div><b>근거:</b> ${p?.fortune?.love?.reason || '-'}</div>
+              <div><b>결론:</b> ${p?.fortune?.love?.verdict || '-'}</div>
+              <ul>${(p?.fortune?.love?.tips||[]).map(t=>`<li>${t}</li>`).join('')}</ul>
+            </div>
+            <div class="card" style="margin-top:8px">
+              <span class="pill">건강운</span>
+              <div><b>근거:</b> ${p?.fortune?.health?.reason || '-'}</div>
+              <div><b>결론:</b> ${p?.fortune?.health?.verdict || '-'}</div>
+              <ul>${(p?.fortune?.health?.tips||[]).map(t=>`<li>${t}</li>`).join('')}</ul>
+            </div>
+          `;
+          persons.appendChild(box);
+        });
+
+        q('#loading').classList.add('hidden');
+        q('#content').classList.remove('hidden');
+      }catch(err){
+        q('#loading').classList.add('hidden');
+        q('#error').classList.remove('hidden');
+        q('#error').textContent = err.message || '불러오기 실패';
+      }
+    }
+    main();
+  </script>
+</body>
+</html>
