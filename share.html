@@ -1,177 +1,168 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>AI 관상궁합 — 공유 결과</title>
-  <style>
-    :root{
-      --bg:#0b1220; --panel:#0f1629; --ink:#eaf1ff; --muted:#9fb3d1;
-      --line:#1b2942; --accent:#8b5cf6; --accent2:#22d3ee; --chip:#152138;
-      --good:#22c55e; --warn:#f59e0b;
-    }
-    body{margin:0;background:var(--bg);color:var(--ink);
-      font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,"Apple SD Gothic Neo","Noto Sans KR";}
-    .wrap{max-width:900px;margin:24px auto;padding:0 16px}
-    .card{background:linear-gradient(180deg,var(--panel),#0c1426);
-      border:1px solid var(--line);border-radius:18px;padding:16px;margin:14px 0}
-    h1{font-size:22px;margin:0 0 6px}
-    .muted{color:var(--muted)}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:var(--chip);border:1px solid var(--line);font-size:12px}
-    .score{display:flex;align-items:center;gap:14px}
-    .badge{width:62px;height:62px;border-radius:50%;
-      background:radial-gradient(60% 60% at 30% 30%, #a78bfa, #22d3ee);display:flex;align-items:center;justify-content:center;
-      color:#fff;font-size:22px;font-weight:800;border:1px solid #ffffff22}
-    .title{font-size:18px;font-weight:800}
-    .two{display:grid;gap:14px}
-    @media(min-width:720px){ .two{grid-template-columns:1fr 1fr} }
-    ul{margin:8px 0 0 18px}
-    li{margin:6px 0}
-    .cta{display:block;text-align:center;padding:14px 18px;border-radius:12px;margin-top:8px;
-      background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;text-decoration:none;font-weight:800}
-    .footer{margin:20px 0;color:#a6b7d3;text-align:center;font-size:13px}
-    .hidden{display:none}
-    .err{color:#ffb4b4}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI 관상궁합 — 공유 결과</title>
+<meta name="color-scheme" content="dark light" />
+<style>
+  :root{
+    --bg:#0b1220; --panel:#0f172a; --panel2:#0d1628;
+    --ink:#ffffff; --line:#20314d; --accent:#7c3aed; --accent2:#22d3ee;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f6f8fc; --panel:#ffffff; --panel2:#ffffff;
+      --ink:#0b1320; --line:#e7edf5; --accent:#6d28d9; --accent2:#0891b2; }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,Helvetica,Arial}
+  .wrap{max-width:1040px;margin:0 auto;padding:16px}
+  header{background:linear-gradient(90deg,#0b1323,#081024);border-bottom:1px solid #ffffff22;box-shadow:0 6px 18px #0006}
+  .brand{display:flex;gap:12px;align-items:center;padding:14px 8px}
+  .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--accent2),var(--accent));box-shadow:0 6px 18px #0008}
+  .brand h1{margin:0;font-size:22px;font-weight:800;color:#fff}
+  .brand p{margin:2px 0 0;color:#fff;font-weight:700}
+  .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+  .section-title{margin:0 0 10px;font-size:20px;font-weight:800}
+  .row{display:flex;gap:12px;align-items:center;margin-bottom:6px}
+  .score{min-width:64px;height:64px;border-radius:50%;
+    background:radial-gradient(70% 70% at 30% 30%,#a78bfa 0%,#60a5fa 60%,#22d3ee 100%);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:900;font-size:22px;box-shadow:0 6px 18px #0008}
+  .card{background:#0e1728;border:1px solid #22324f;border-radius:16px;padding:14px;margin-top:12px}
+  .mini{background:#0d1426;border:1px solid #1e2d4a;border-radius:14px;padding:12px;margin-top:12px}
+  .mini h4{margin:0 0 8px;font-size:15px;font-weight:800}
+  ul{margin:6px 0 0 18px}
+  footer{margin:20px 0;color:#cfe1ff;text-align:center}
+  footer a{color:#fff;font-weight:800}
+
+  /* 모바일 가독성 보정 */
+  html,body{-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  h1,h2,h3,h4,.section-title{color:#fff!important;text-shadow:0 1px 1px rgba(0,0,0,.55);font-weight:800}
+  .card,.panel,.mini{color:rgba(255,255,255,.98)}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
+<header>
+  <div class="wrap brand">
+    <div class="logo" aria-hidden="true"></div>
+    <div>
       <h1>AI 관상궁합 — 공유 결과</h1>
-      <div class="muted">친구에게 공유된 관상 궁합 리포트입니다. (오락/참고용)</div>
+      <p>친구에게 공유된 관상 궁합 리포트입니다. (오락/참고용)</p>
     </div>
-
-    <div id="loading" class="card">불러오는 중…</div>
-    <div id="error" class="card err hidden"></div>
-
-    <div id="content" class="hidden">
-      <!-- 하이라이트 -->
-      <div class="card">
-        <div class="title">결과 하이라이트</div>
-        <div id="loveBox" class="card" style="margin:12px 0 0">
-          <div class="score">
-            <div class="badge" id="loveScore">—</div>
-            <div>
-              <div class="title">💖 연애/우정 궁합</div>
-              <div class="muted" id="loveSummary">—</div>
-            </div>
-          </div>
-          <div class="two" style="margin-top:10px">
-            <div>
-              <span class="pill">잘 맞는 점</span>
-              <ul id="loveStrengths"></ul>
-            </div>
-            <div>
-              <span class="pill">조심해야 할 점</span>
-              <ul id="loveCautions"></ul>
-            </div>
-          </div>
-        </div>
-
-        <div id="bizBox" class="card" style="margin-top:10px">
-          <div class="score">
-            <div class="badge" id="bizScore">—</div>
-            <div>
-              <div class="title">💼 비즈니스 궁합</div>
-              <div class="muted" id="bizSummary">—</div>
-            </div>
-          </div>
-          <div class="two" style="margin-top:10px">
-            <div>
-              <span class="pill">잘 맞는 점</span>
-              <ul id="bizStrengths"></ul>
-            </div>
-            <div>
-              <span class="pill">조심해야 할 점</span>
-              <ul id="bizCautions"></ul>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 개인별 운세 -->
-      <div class="card">
-        <div class="title">개인별 관상 특징 & 운세</div>
-        <div class="two" id="persons"></div>
-      </div>
-
-      <a class="cta" href="/">무료로 AI 관상궁합 해보기</a>
-    </div>
-
-    <div class="footer">© 2025 AI 관상궁합</div>
   </div>
+</header>
 
-  <script>
-    function q(sel){ return document.querySelector(sel) }
-    function el(tag, cls){ const x=document.createElement(tag); if(cls) x.className=cls; return x }
-    function getId(){
-      const u=new URL(location.href);
-      return u.searchParams.get('id') || location.pathname.split('/').filter(Boolean).pop();
+<main class="wrap">
+  <section id="err" class="panel" style="display:none"><div id="errmsg" style="color:#ffb4b4;font-weight:800">결과를 찾을 수 없습니다.</div></section>
+
+  <section id="hi" class="panel" style="display:none">
+    <h2 class="section-title">결과 하이라이트</h2>
+
+    <div id="love" class="card">
+      <div class="row">
+        <div class="score" id="loveScore">–</div>
+        <div>
+          <div style="font-weight:800">💖 연애/우정 궁합</div>
+          <div id="loveSummary" style="opacity:.9">—</div>
+        </div>
+      </div>
+      <div class="mini">
+        <h4>잘 맞는 점</h4>
+        <ul id="loveStrengths"></ul>
+        <h4 style="margin-top:10px">조심해야 할 점</h4>
+        <ul id="loveCautions"></ul>
+      </div>
+    </div>
+
+    <div id="biz" class="card">
+      <div class="row">
+        <div class="score" id="bizScore">–</div>
+        <div>
+          <div style="font-weight:800">💼 비즈니스 궁합</div>
+          <div id="bizSummary" style="opacity:.9">—</div>
+        </div>
+      </div>
+      <div class="mini">
+        <h4>잘 맞는 점</h4>
+        <ul id="bizStrengths"></ul>
+        <h4 style="margin-top:10px">조심해야 할 점</h4>
+        <ul id="bizCautions"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="persons" class="panel" style="display:none">
+    <h2 class="section-title">👤 개인별 관상 특징 & 운세</h2>
+
+    <div class="card">
+      <div style="font-weight:800;margin-bottom:6px">A · 관상 기반 운세</div>
+      <div id="aFortunes"></div>
+    </div>
+    <div class="card">
+      <div style="font-weight:800;margin-bottom:6px">B · 관상 기반 운세</div>
+      <div id="bFortunes"></div>
+    </div>
+  </section>
+
+  <footer>© 2025 AI 관상궁합 · 문의: <a href="mailto:dongja279@gmail.com">dongja279@gmail.com</a></footer>
+</main>
+
+<script>
+  const $ = (id)=>document.getElementById(id);
+  const li = (s)=>`<li>${String(s||'')}</li>`;
+  const listHtml = (a)=> (a||[]).map(li).join('');
+  const mini = (title,obj)=>`<div class="mini">
+      <h4>${title}</h4>
+      <div><b>근거:</b> ${String(obj?.reason||'-')}</div>
+      <div style="margin-top:4px"><b>결론:</b> ${String(obj?.verdict||'-')}</div>
+      ${(obj?.tips?.length? `<ul style="margin-top:6px">${listHtml(obj.tips)}</ul>`:'')}
+    </div>`;
+
+  async function main(){
+    const id = new URL(location.href).searchParams.get('r')||'';
+    if(!id){ showErr('잘못된 링크입니다.'); return; }
+
+    try{
+      const r = await fetch(`/api/get?r=${encodeURIComponent(id)}`, { cache:'no-store' });
+      const j = await r.json().catch(()=>null);
+      if(!r.ok || !j?.ok){ showErr(j?.error || '결과를 찾을 수 없습니다.'); return; }
+      const d = j.data && typeof j.data === 'string' ? JSON.parse(j.data) : j.data;
+
+      // 하이라이트
+      const L = d?.compatibility?.love_friendship || {};
+      const B = d?.compatibility?.business || {};
+      $('loveScore').textContent = (L.score ?? '–');
+      $('loveSummary').textContent = L.summary || '—';
+      $('loveStrengths').innerHTML = listHtml(L?.strengths);
+      $('loveCautions').innerHTML  = listHtml(L?.cautions);
+
+      $('bizScore').textContent = (B.score ?? '–');
+      $('bizSummary').textContent = B.summary || '—';
+      $('bizStrengths').innerHTML = listHtml(B?.strengths);
+      $('bizCautions').innerHTML  = listHtml(B?.cautions);
+
+      // 개인별
+      const pA = d?.personA || {}, pB = d?.personB || {};
+      $('aFortunes').innerHTML =
+        mini('💰 재물운', pA?.wealth) + mini('💖 연애운', pA?.love) + mini('💪 건강운', pA?.health);
+      $('bFortunes').innerHTML =
+        mini('💰 재물운', pB?.wealth) + mini('💖 연애운', pB?.love) + mini('💪 건강운', pB?.health);
+
+      $('hi').style.display = '';
+      $('persons').style.display = '';
+    }catch(e){
+      showErr('네트워크 오류: '+(e?.message||e));
     }
-    function fillList(ul, arr){ ul.innerHTML=''; (arr||[]).forEach(t=>{ const li=el('li'); li.textContent=t; ul.appendChild(li); }) }
+  }
 
-    async function main(){
-      const id = getId();
-      if(!id){ q('#loading').classList.add('hidden'); q('#error').classList.remove('hidden'); q('#error').textContent='잘못된 링크입니다.'; return }
+  function showErr(msg){
+    $('err').style.display=''; $('errmsg').textContent = msg || '결과를 찾을 수 없습니다.';
+  }
 
-      try{
-        const r = await fetch('/api/get?id='+encodeURIComponent(id));
-        if(!r.ok){ throw new Error('결과를 찾을 수 없습니다.') }
-        const data = await r.json(); // {type, result}
-
-        const { result } = data;
-
-        // 하이라이트
-        q('#loveScore').textContent = (result?.compatibility?.love_friendship?.score ?? '—');
-        q('#loveSummary').textContent = result?.compatibility?.love_friendship?.summary || '';
-        fillList(q('#loveStrengths'), result?.compatibility?.love_friendship?.strengths);
-        fillList(q('#loveCautions'),  result?.compatibility?.love_friendship?.cautions);
-
-        q('#bizScore').textContent = (result?.compatibility?.business?.score ?? '—');
-        q('#bizSummary').textContent = result?.compatibility?.business?.summary || '';
-        fillList(q('#bizStrengths'), result?.compatibility?.business?.strengths);
-        fillList(q('#bizCautions'),  result?.compatibility?.business?.cautions);
-
-        // 개인별
-        const persons = q('#persons'); persons.innerHTML='';
-        ['personA','personB'].forEach((key, idx)=>{
-          const p = result?.[key];
-          if(!p) return;
-          const box = el('div','card');
-          const name = idx===0 ? 'A' : 'B';
-          box.innerHTML = `
-            <div class="title">${name}</div>
-            <div class="card" style="margin-top:8px">
-              <span class="pill">재물운</span>
-              <div><b>근거:</b> ${p?.fortune?.wealth?.reason || '-'}</div>
-              <div><b>결론:</b> ${p?.fortune?.wealth?.verdict || '-'}</div>
-              <ul>${(p?.fortune?.wealth?.tips||[]).map(t=>`<li>${t}</li>`).join('')}</ul>
-            </div>
-            <div class="card" style="margin-top:8px">
-              <span class="pill">연애운</span>
-              <div><b>근거:</b> ${p?.fortune?.love?.reason || '-'}</div>
-              <div><b>결론:</b> ${p?.fortune?.love?.verdict || '-'}</div>
-              <ul>${(p?.fortune?.love?.tips||[]).map(t=>`<li>${t}</li>`).join('')}</ul>
-            </div>
-            <div class="card" style="margin-top:8px">
-              <span class="pill">건강운</span>
-              <div><b>근거:</b> ${p?.fortune?.health?.reason || '-'}</div>
-              <div><b>결론:</b> ${p?.fortune?.health?.verdict || '-'}</div>
-              <ul>${(p?.fortune?.health?.tips||[]).map(t=>`<li>${t}</li>`).join('')}</ul>
-            </div>
-          `;
-          persons.appendChild(box);
-        });
-
-        q('#loading').classList.add('hidden');
-        q('#content').classList.remove('hidden');
-      }catch(err){
-        q('#loading').classList.add('hidden');
-        q('#error').classList.remove('hidden');
-        q('#error').textContent = err.message || '불러오기 실패';
-      }
-    }
-    main();
-  </script>
+  main();
+</script>
 </body>
 </html>
