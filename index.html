@@ -19,10 +19,8 @@
     }
   }
   *{box-sizing:border-box}
-  html,body{
-    margin:0;background:var(--bg);color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,Helvetica,Arial
-  }
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,Helvetica,Arial}
   .wrap{max-width:1040px;margin:0 auto;padding:16px}
 
   /* 헤더 */
@@ -31,8 +29,8 @@
     border-bottom:1px solid #ffffff22;box-shadow:0 6px 18px #0006}
   .brand{display:flex;gap:12px;align-items:center;padding:14px 8px}
   .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--accent2),var(--accent));box-shadow:0 6px 18px #0008}
-  .brand h1{margin:0;font-size:22px;font-weight:800;color:#fff}
-  .brand p{margin:2px 0 0;color:#fff;font-weight:700}
+  .brand h1{margin:0;font-size:22px;font-weight:900;letter-spacing:.2px;color:#fff}
+  .brand p{margin:2px 0 0;color:#e8f2ff;font-weight:700}
 
   .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));
     border:1px solid var(--line);border-radius:16px;padding:16px}
@@ -45,26 +43,26 @@
     display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;
     border:1px solid #1e2a40;background:#0b1424;
   }
-  /* alt 문구/아이콘 숨김 */
-  .slot .preview:not([src]), .slot .preview[src=""]{opacity:1}
+  /* alt/아이콘 숨김 */
+  .slot .preview[alt]{color:transparent}
   .slot .choose{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
     padding:12px 18px;border-radius:12px;border:1px solid #ffffff28;
     background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:900;cursor:pointer}
   input[type=file]{display:none}
 
   .meter{height:10px;border-radius:999px;background:#0d1628;border:1px solid #182a48;overflow:hidden}
-  .meter>div{height:100%;width:0%;background:linear-gradient(90deg,var(--accent2),var(--accent))}
-  .status{margin-top:8px;color:#fff;font-weight:800}
+  .meter>div{height:100%;width:0%;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .25s ease}
+  /* 진행률 텍스트는 블랙(모바일 가독성) */
+  .status{margin-top:8px;color:#000;font-weight:900}
 
+  .actions{display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap}
   .btn{border:none;border-radius:14px;padding:14px 18px;font-weight:900;cursor:pointer;transition:.2s}
   .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;min-width:240px}
   .btn.secondary{background:#123; border:1px solid #2a3b5b;color:#dfe7fb;min-width:240px}
   .btn:disabled{opacity:.5;cursor:not-allowed}
 
-  .actions-top{display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap}
-  .actions-bottom{display:flex;justify-content:center;margin-top:18px}
-
-  h2.section-title{margin:0 0 10px;font-size:20px;font-weight:800;color:#fff}
+  /* 섹션 타이틀은 블랙(모바일에서 흐려 보이는 문제 해결) */
+  h2.section-title{margin:0 0 10px;font-size:20px;font-weight:900;color:#000}
 
   .card{background:#0e1728;border:1px solid #22324f;border-radius:16px;padding:14px;margin-top:12px;color:#eaf2ff}
   .list{margin:6px 0 0 0;padding:0 0 0 18px}
@@ -78,18 +76,14 @@
     color:#fff;font-weight:900;font-size:22px;box-shadow:0 6px 18px #0008;margin-right:12px}
 
   .mini{background:#0d1426;border:1px solid #1e2d4a;border-radius:14px;padding:12px;margin-top:12px}
-  .mini h4{margin:0 0 8px;font-size:15px;font-weight:800;color:#fff}
+  .mini h4{margin:0 0 8px;font-size:15px;font-weight:900;color:#fff}
   .mini .reason,.mini .verdict{font-weight:800}
   .mini .tips{margin:8px 0 0 16px}
   .dim{color:#e9f2ff}
 
+  .shareRow{display:flex;justify-content:center;margin-top:18px}
   footer{margin:20px 0;color:#cfe1ff;text-align:center}
   footer a{color:#fff;font-weight:800}
-
-  /* === 모바일 가독성 보정 === */
-  html,body{-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-  h1,h2,h3,h4,.section-title{color:#fff!important;text-shadow:0 1px 1px rgba(0,0,0,.55);font-weight:800}
-  .card,.panel,.mini{color:rgba(255,255,255,.98)}
 </style>
 </head>
 <body>
@@ -106,7 +100,7 @@
 <main class="wrap">
   <!-- 업로드 -->
   <section class="panel">
-    <h2 class="section-title">사진 업로드</h2>
+    <!-- 요청: “사진 업로드” 텍스트 삭제 (h2 제거) -->
     <div class="grid">
       <div class="slot">
         <img id="prevA" class="preview" alt="" />
@@ -125,7 +119,7 @@
       <div id="status" class="status">대기 중…</div>
     </div>
 
-    <div class="actions-top">
+    <div class="actions">
       <button id="analyze" class="btn primary">🔮 관상궁합 분석하기</button>
     </div>
   </section>
@@ -134,15 +128,15 @@
   <section id="hi" class="panel" style="margin-top:16px;display:none">
     <h2 class="section-title">결과 하이라이트</h2>
 
-    <div id="loveCard" class="card">
+    <div id="loveCard" class="card" style="display:none">
       <div class="row">
         <div class="scoreBadge" id="loveScore">–</div>
         <div>
-          <div style="font-weight:800">💖 연애/우정 궁합</div>
-          <div id="loveSummary" class="dim">분석 중…</div>
+          <div style="font-weight:900">💖 연애/우정 궁합</div>
+          <div id="loveSummary" class="dim">—</div>
         </div>
       </div>
-      <div class="mini">
+      <div class="mini" id="loveMini" style="display:none">
         <h4>잘 맞는 점</h4>
         <ul id="loveStrengths" class="list"></ul>
         <h4 style="margin-top:10px">조심해야 할 점</h4>
@@ -150,15 +144,15 @@
       </div>
     </div>
 
-    <div id="bizCard" class="card">
+    <div id="bizCard" class="card" style="display:none">
       <div class="row">
         <div class="scoreBadge" id="bizScore">–</div>
         <div>
-          <div style="font-weight:800">💼 비즈니스 궁합</div>
-          <div id="bizSummary" class="dim">분석 중…</div>
+          <div style="font-weight:900">💼 비즈니스 궁합</div>
+          <div id="bizSummary" class="dim">—</div>
         </div>
       </div>
-      <div class="mini">
+      <div class="mini" id="bizMini" style="display:none">
         <h4>잘 맞는 점</h4>
         <ul id="bizStrengths" class="list"></ul>
         <h4 style="margin-top:10px">조심해야 할 점</h4>
@@ -171,18 +165,18 @@
   <section id="persons" class="panel" style="margin-top:16px;display:none">
     <h2 class="section-title">👤 개인별 관상 특징 & 운세</h2>
 
-    <div id="personA" class="card">
+    <div id="personA" class="card" style="display:none">
       <div class="row"><span class="pill">A</span><span class="dim">관상 기반 운세</span></div>
       <div id="aFortunes"></div>
     </div>
 
-    <div id="personB" class="card">
+    <div id="personB" class="card" style="display:none">
       <div class="row"><span class="pill">B</span><span class="dim">관상 기반 운세</span></div>
       <div id="bFortunes"></div>
     </div>
 
-    <!-- 결과 하단 공유 버튼 -->
-    <div class="actions-bottom">
+    <!-- 공유 버튼은 결과 맨 하단 -->
+    <div class="shareRow">
       <button id="shareBtn" class="btn secondary" disabled>🗂️ 공유 링크 복사</button>
     </div>
   </section>
@@ -191,7 +185,7 @@
 </main>
 
 <script>
-  // 요소
+  // 엘리먼트 참조
   const pickA=document.getElementById('pickA'), pickB=document.getElementById('pickB');
   const fileA=document.getElementById('fileA'), fileB=document.getElementById('fileB');
   const prevA=document.getElementById('prevA'), prevB=document.getElementById('prevB');
@@ -199,89 +193,139 @@
   const bar=document.getElementById('bar'), statusEl=document.getElementById('status');
   const hiSec=document.getElementById('hi'), personsSec=document.getElementById('persons');
 
-  const loveScore=document.getElementById('loveScore'), loveSummary=document.getElementById('loveSummary');
-  const loveStrengths=document.getElementById('loveStrengths'), loveCautions=document.getElementById('loveCautions');
-  const bizScore=document.getElementById('bizScore'), bizSummary=document.getElementById('bizSummary');
-  const bizStrengths=document.getElementById('bizStrengths'), bizCautions=document.getElementById('bizCautions');
+  const loveCard=document.getElementById('loveCard'), loveScore=document.getElementById('loveScore'), loveSummary=document.getElementById('loveSummary');
+  const loveStrengths=document.getElementById('loveStrengths'), loveCautions=document.getElementById('loveCautions'), loveMini=document.getElementById('loveMini');
+  const bizCard=document.getElementById('bizCard'), bizScore=document.getElementById('bizScore'), bizSummary=document.getElementById('bizSummary');
+  const bizStrengths=document.getElementById('bizStrengths'), bizCautions=document.getElementById('bizCautions'), bizMini=document.getElementById('bizMini');
   const aFortunes=document.getElementById('aFortunes'), bFortunes=document.getElementById('bFortunes');
+  const personA=document.getElementById('personA'), personB=document.getElementById('personB');
 
-  // 업로드
+  // 파일 핸들링
   const readAsDataURL = f => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); });
   pickA.onclick=()=>fileA.click(); pickB.onclick=()=>fileB.click();
   let imgA=null,imgB=null;
   fileA.onchange=async e=>{const f=e.target.files?.[0]; if(!f) return; imgA=await readAsDataURL(f); prevA.src=imgA;}
   fileB.onchange=async e=>{const f=e.target.files?.[0]; if(!f) return; imgB=await readAsDataURL(f); prevB.src=imgB;}
 
-  // 진행률
-  function startProgress(){
+  // 진행률 애니메이션
+  function stagedProgress(){
     shareBtn.disabled=true; hiSec.style.display='none'; personsSec.style.display='none';
-    statusEl.textContent='분석 준비 중…'; bar.style.width='0%';
-    let p=0; const t=setInterval(()=>{ p+=Math.floor(Math.random()*12)+8; if(p>=96)p=96; bar.style.width=p+'%'; statusEl.textContent=p+'% 분석 중…'; },450);
-    return ()=>clearInterval(t);
+    let p=0; bar.style.width='0%'; statusEl.textContent='진행률 0%';
+    const stages=[10,20,35,50,65,80,95];
+    let i=0;
+    const timer=setInterval(()=>{
+      if(i<stages.length){ p=stages[i++]; bar.style.width=p+'%'; statusEl.textContent=`진행률 ${p}%`; }
+    }, 550);
+    return {
+      finish(ok=true){
+        clearInterval(timer);
+        bar.style.width='100%';
+        statusEl.textContent= ok ? '분석 완료!' : '오류 발생';
+      }
+    };
   }
-  function finishProgress(){ bar.style.width='100%'; statusEl.textContent='분석 완료!'; }
 
-  // 렌더 유틸
+  // 유틸
   const li = s => `<li>${String(s||'')}</li>`;
-  const listHtml = a => (a||[]).map(li).join('');
+  const listHtml = a => (a||[]).filter(Boolean).map(li).join('');
   function mini(title,obj){
+    if(!obj) return '';
+    const reason = obj.reason ? `<div class="reason"><b>근거:</b> ${String(obj.reason)}</div>` : '';
+    const verdict = obj.verdict ? `<div class="verdict"><b>결론:</b> ${String(obj.verdict)}</div>` : '';
+    const tips = (obj.tips && obj.tips.length) ? `<ul class="tips">${listHtml(obj.tips)}</ul>` : '';
+    if(!(reason||verdict||tips)) return '';
     return `<div class="mini">
       <h4>${title}</h4>
-      <div class="reason"><b>근거:</b> ${String(obj?.reason||'-')}</div>
-      <div class="verdict" style="margin-top:4px"><b>결론:</b> ${String(obj?.verdict||'-')}</div>
-      ${(obj?.tips?.length? `<ul class="tips">${listHtml(obj.tips)}</ul>`:'')}
+      ${reason}${verdict}${tips}
     </div>`;
   }
   function renderPersons(pA,pB){
-    aFortunes.innerHTML= mini('💰 재물운',pA?.wealth)+mini('💖 연애운',pA?.love)+mini('💪 건강운',pA?.health);
-    bFortunes.innerHTML= mini('💰 재물운',pB?.wealth)+mini('💖 연애운',pB?.love)+mini('💪 건강운',pB?.health);
+    const aHtml = [
+      mini('💰 재물운',pA?.wealth),
+      mini('💖 연애운',pA?.love),
+      mini('💪 건강운',pA?.health),
+    ].filter(Boolean).join('');
+    const bHtml = [
+      mini('💰 재물운',pB?.wealth),
+      mini('💖 연애운',pB?.love),
+      mini('💪 건강운',pB?.health),
+    ].filter(Boolean).join('');
+    personA.style.display = aHtml ? '' : 'none';
+    personB.style.display = bHtml ? '' : 'none';
+    aFortunes.innerHTML=aHtml;
+    bFortunes.innerHTML=bHtml;
   }
   function renderHighlights(d){
     const L=d?.compatibility?.love_friendship||{}, B=d?.compatibility?.business||{};
-    loveScore.textContent=(L.score??'–'); loveSummary.textContent=L.summary||'—';
-    loveStrengths.innerHTML=listHtml(L.strengths); loveCautions.innerHTML=listHtml(L.cautions);
-    bizScore.textContent=(B.score??'–'); bizSummary.textContent=B.summary||'—';
-    bizStrengths.innerHTML=listHtml(B.strengths); bizCautions.innerHTML=listHtml(B.cautions);
+    // love
+    const hasLove = (L.score!=null) || (L.summary) || (L.strengths?.length) || (L.cautions?.length);
+    loveCard.style.display = hasLove ? '' : 'none';
+    if(hasLove){
+      loveScore.textContent=(L.score??'–');
+      loveSummary.textContent=L.summary||'—';
+      const s1=listHtml(L.strengths), s2=listHtml(L.cautions);
+      loveMini.style.display = (s1||s2) ? '' : 'none';
+      loveStrengths.innerHTML=s1; loveCautions.innerHTML=s2;
+    }
+    // biz
+    const hasBiz = (B.score!=null) || (B.summary) || (B.strengths?.length) || (B.cautions?.length);
+    bizCard.style.display = hasBiz ? '' : 'none';
+    if(hasBiz){
+      bizScore.textContent=(B.score??'–');
+      bizSummary.textContent=B.summary||'—';
+      const b1=listHtml(B.strengths), b2=listHtml(B.cautions);
+      bizMini.style.display = (b1||b2) ? '' : 'none';
+      bizStrengths.innerHTML=b1; bizCautions.innerHTML=b2;
+    }
+    // 하이라이트 섹션 자체 보이기
+    hiSec.style.display = (hasLove||hasBiz) ? '' : 'none';
   }
 
-  // 공유 링크 생성
   async function createShareLink(payload){
-    // payload는 객체여도 되고 문자열이어도 됨(백엔드에서 처리)
-    const r=await fetch('/api/share',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({data:payload})
-    });
-    const j=await r.json().catch(()=>null);
-    if(!r.ok || !j?.ok) throw new Error(j?.error || '공유 링크 생성 실패');
-    return j.url; // share.html?r=xxxx
+    // 서버가 어떤 URL을 주더라도, 클라이언트에서 확실히 share.html로 고정
+    const r=await fetch('/api/share',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:payload})});
+    const j=await r.json(); if(!r.ok) throw new Error(j?.error||'공유 링크 생성 실패');
+    const id = j.id || new URL(j.url||'', location.href).searchParams.get('r');
+    const finalUrl = `${location.origin}/share.html?r=${encodeURIComponent(id)}`;
+    return finalUrl;
   }
 
   // 분석
   analyzeBtn.onclick=async ()=>{
     if(!imgA||!imgB){alert('A, B 사진을 모두 업로드해 주세요.');return;}
-    const stop=startProgress(); analyzeBtn.disabled=true;
+    const prog=stagedProgress(); analyzeBtn.disabled=true;
     try{
       const res=await fetch('/api/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imgA,imgB})});
       const data=await res.json(); if(!res.ok) throw new Error(data?.error||'분석 실패');
 
       renderHighlights(data); renderPersons(data.personA,data.personB);
-      hiSec.style.display=''; personsSec.style.display=''; stop(); finishProgress();
+      personsSec.style.display=''; // 개인섹션은 renderPersons 내부에서 카드 가시성 제어
+      prog.finish(true);
 
+      // 공유 버튼 세팅 (결과 하단)
       shareBtn.disabled=false;
       shareBtn.onclick=async()=>{
         try{
           shareBtn.disabled=true; shareBtn.textContent='링크 생성 중…';
-          // 문자열로 저장하면 용량/호환성 좋음
-          const url=await createShareLink(JSON.stringify(data));
+          // 이미지 데이터 제거(용량 보호)
+          const safe = JSON.parse(JSON.stringify(data));
+          delete safe.imgA; delete safe.imgB;
+          const url=await createShareLink(safe);
           await navigator.clipboard.writeText(url);
           shareBtn.textContent='✅ 링크 복사됨';
-          setTimeout(()=>{shareBtn.textContent='🗂️ 공유 링크 복사'; shareBtn.disabled=false;},1500);
-        }catch(e){ alert('링크 생성 실패: '+(e?.message||e)); shareBtn.textContent='🗂️ 공유 링크 복사'; shareBtn.disabled=false; }
+          setTimeout(()=>{shareBtn.textContent='🗂️ 공유 링크 복사'; shareBtn.disabled=false;},1600);
+        }catch(e){
+          alert('링크 생성 실패: '+(e?.message||e));
+          shareBtn.textContent='🗂️ 공유 링크 복사'; shareBtn.disabled=false;
+        }
       };
 
-    }catch(e){ stop(); finishProgress(); alert('분석 중 오류가 발생했습니다.\n'+(e?.message||e)); }
-    finally{ analyzeBtn.disabled=false; }
+    }catch(e){
+      prog.finish(false);
+      alert('분석 중 오류가 발생했습니다.\n'+(e?.message||e));
+    }finally{
+      analyzeBtn.disabled=false;
+    }
   };
 </script>
 </body>
