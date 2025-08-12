@@ -1,18 +1,40 @@
 // /api/get.js
-import { Redis } from '@upstash/redis';
-const redis = Redis.fromEnv();
-
 export default async function handler(req, res) {
+  const send = (code, obj) => {
+    res.status(code)
+      .setHeader('Content-Type', 'application/json')
+      .setHeader('Cache-Control', 'no-store');
+    res.end(JSON.stringify(obj));
+  };
+
+  if (req.method !== 'GET') return send(405, { error: 'Method not allowed' });
+
   try {
-    const id = (req.query.id || req.query.key || '').toString();
-    if (!id) return res.status(400).json({ error: 'Missing id' });
+    const { KV_REST_API_URL, KV_REST_API_TOKEN } = process.env;
+    if (!KV_REST_API_URL || !KV_REST_API_TOKEN) {
+      return send(500, { error: 'Missing KV env vars' });
+    }
 
-    const data = await redis.get(id);
-    if (!data) return res.status(404).json({ error: 'Not found' });
+    const id = (req.query.r || req.query.id || '').toString().trim();
+    if (!/^[a-z0-9]{6,12}$/i.test(id)) return send(400, { error: 'Bad id' });
 
-    // data = { type, result }
-    return res.status(200).json(data);
+    const key = `ai-face:${id}`;
+    const r = await fetch(`${KV_REST_API_URL}/get/${encodeURIComponent(key)}`, {
+      headers: { Authorization: `Bearer ${KV_REST_API_TOKEN}` }
+    });
+
+    const text = await r.text();
+    if (!r.ok) {
+      let err = text; try { err = JSON.parse(text)?.error || err; } catch {}
+      return send(500, { error: `KV get failed: ${err}` });
+    }
+
+    if (text === 'null' || text === '') return send(404, { error: 'Not found' });
+
+    let data = text;
+    try { data = JSON.parse(text); } catch {/* 저장이 문자열인 경우 그대로 반환 */}
+    return send(200, { ok: true, data });
   } catch (e) {
-    return res.status(500).json({ error: e?.message || 'Get error' });
+    return send(500, { error: e?.message || 'Unexpected server error' });
   }
 }
