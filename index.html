@@ -10,14 +10,12 @@
     --bg:#0b1220; --panel:#0f172a; --panel2:#0d1628;
     --ink:#ffffff; --muted:#cfe1ff; --sub:#e7efff;
     --accent:#7c3aed; --accent2:#22d3ee; --line:#20314d;
-    --ink-strong:#000; /* 섹션 타이틀/프로그레스 텍스트 블랙 고정 */
   }
   @media (prefers-color-scheme: light){
     :root{
       --bg:#f6f8fc; --panel:#ffffff; --panel2:#ffffff;
       --ink:#0b1320; --muted:#24324a; --sub:#1b2740; --line:#e7edf5;
       --accent:#6d28d9; --accent2:#0891b2;
-      --ink-strong:#000;
     }
   }
   *{box-sizing:border-box}
@@ -44,15 +42,16 @@
     display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;
     border:1px solid #1e2a40;background:#0b1424;
   }
+  /* 깨진 아이콘/alt 안 보이게 */
   .slot .preview:not([src]), .slot .preview[src=""]{opacity:1}
   .slot .choose{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
     padding:12px 18px;border-radius:12px;border:1px solid #ffffff28;
     background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:900;cursor:pointer}
   input[type=file]{display:none}
 
-  .meter{height:10px;border-radius:999px;background:#0d1628;border:1px solid #182a48;overflow:hidden}
-  .meter>div{height:100%;width:0%;background:linear-gradient(90deg,var(--accent2),var(--accent));transition:width .25s ease}
-  .status{margin-top:8px;font-weight:900;color:var(--ink-strong)} /* 진행률 블랙 */
+  .meter{height:10px;border-radius:999px;background:#0d1628;border:1px solid #182a48;overflow:hidden;margin-top:10px}
+  .meter>div{height:100%;width:0%;background:linear-gradient(90deg,var(--accent2),var(--accent))}
+  .status{margin-top:8px;color:#000;font-weight:900} /* 텍스트 블랙 */
 
   .actions{display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap}
   .btn{border:none;border-radius:14px;padding:14px 18px;font-weight:900;cursor:pointer;transition:.2s}
@@ -60,7 +59,7 @@
   .btn.secondary{background:#123; border:1px solid #2a3b5b;color:#dfe7fb;min-width:240px}
   .btn:disabled{opacity:.5;cursor:not-allowed}
 
-  .section-title{margin:0 0 10px;font-size:20px;font-weight:900;color:var(--ink-strong)} /* 섹션 타이틀 블랙 */
+  h2.section-title{margin:0 0 10px;font-size:20px;font-weight:900;color:#000} /* 섹션 제목 블랙 */
 
   .card{background:#0e1728;border:1px solid #22324f;border-radius:16px;padding:14px;margin-top:12px;color:#eaf2ff}
   .list{margin:6px 0 0 0;padding:0 0 0 18px}
@@ -81,10 +80,6 @@
 
   footer{margin:20px 0;color:#cfe1ff;text-align:center}
   footer a{color:#fff;font-weight:800}
-
-  /* 진입 애니메이션(결과 나타날 때) */
-  .fade-in{opacity:0;transform:translateY(8px);animation:fi .45s ease forwards}
-  @keyframes fi{to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
@@ -99,25 +94,24 @@
 </header>
 
 <main class="wrap">
-  <!-- 업로드 (요청: '사진 업로드' 제목 제거) -->
+  <!-- 업로드 -->
   <section class="panel">
+    <!-- 요구로 '사진 업로드' 텍스트 제거 -->
     <div class="grid">
       <div class="slot">
-        <img id="prevA" class="preview" alt="" />
-        <input id="fileA" type="file" accept="image/*" />
+        <img id="prevA" class="preview" alt="" decoding="async" />
+        <input id="fileA" type="file" accept="image/*" /> <!-- 갤러리만, capture 제거 -->
         <button id="pickA" class="choose">A 사진 업로드</button>
       </div>
       <div class="slot">
-        <img id="prevB" class="preview" alt="" />
+        <img id="prevB" class="preview" alt="" decoding="async" />
         <input id="fileB" type="file" accept="image/*" />
         <button id="pickB" class="choose">B 사진 업로드</button>
       </div>
     </div>
 
-    <div style="margin-top:14px">
-      <div class="meter"><div id="bar"></div></div>
-      <div id="status" class="status">대기 중…</div>
-    </div>
+    <div class="meter"><div id="bar"></div></div>
+    <div id="status" class="status">대기 중…</div>
 
     <div class="actions">
       <button id="analyze" class="btn primary">🔮 관상궁합 분석하기</button>
@@ -128,7 +122,7 @@
   <section id="hi" class="panel" style="margin-top:16px;display:none">
     <h2 class="section-title">결과 하이라이트</h2>
 
-    <div id="loveCard" class="card fade-in">
+    <div id="loveCard" class="card">
       <div class="row">
         <div class="scoreBadge" id="loveScore">–</div>
         <div>
@@ -144,7 +138,7 @@
       </div>
     </div>
 
-    <div id="bizCard" class="card fade-in">
+    <div id="bizCard" class="card">
       <div class="row">
         <div class="scoreBadge" id="bizScore">–</div>
         <div>
@@ -165,19 +159,19 @@
   <section id="persons" class="panel" style="margin-top:16px;display:none">
     <h2 class="section-title">👤 개인별 관상 특징 & 운세</h2>
 
-    <div id="personA" class="card fade-in">
+    <div id="personA" class="card">
       <div class="row"><span class="pill">A</span><span class="dim">관상 기반 운세</span></div>
       <div id="aFortunes"></div>
     </div>
 
-    <div id="personB" class="card fade-in">
+    <div id="personB" class="card">
       <div class="row"><span class="pill">B</span><span class="dim">관상 기반 운세</span></div>
       <div id="bFortunes"></div>
     </div>
   </section>
 
-  <!-- 결과 하단 공유 -->
-  <section id="shareSec" class="panel" style="margin-top:16px;display:none">
+  <!-- 하단 공유 -->
+  <section class="panel" style="margin-top:16px;display:none" id="sharePanel">
     <div class="actions">
       <button id="shareBtn" class="btn secondary">📤 결과 공유하기</button>
     </div>
@@ -192,8 +186,9 @@
   const fileA=document.getElementById('fileA'), fileB=document.getElementById('fileB');
   const prevA=document.getElementById('prevA'), prevB=document.getElementById('prevB');
   const analyzeBtn=document.getElementById('analyze'), shareBtn=document.getElementById('shareBtn');
+  const sharePanel=document.getElementById('sharePanel');
   const bar=document.getElementById('bar'), statusEl=document.getElementById('status');
-  const hiSec=document.getElementById('hi'), personsSec=document.getElementById('persons'), shareSec=document.getElementById('shareSec');
+  const hiSec=document.getElementById('hi'), personsSec=document.getElementById('persons');
 
   const loveScore=document.getElementById('loveScore'), loveSummary=document.getElementById('loveSummary');
   const loveStrengths=document.getElementById('loveStrengths'), loveCautions=document.getElementById('loveCautions');
@@ -201,69 +196,47 @@
   const bizStrengths=document.getElementById('bizStrengths'), bizCautions=document.getElementById('bizCautions');
   const aFortunes=document.getElementById('aFortunes'), bFortunes=document.getElementById('bFortunes');
 
-  // ===== 업로드(갤러리만) =====
-  const readAsDataURL = f => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); });
   pickA.onclick=()=>fileA.click(); pickB.onclick=()=>fileB.click();
-  let imgA=null,imgB=null;
 
-  // 과감 압축기
-  async function compressToDataURL(file, {
-    maxDim = 900, targetKB = 280, minQuality = 0.45, stepQuality = 0.1, shrinkFactor = 0.82
-  } = {}) {
-    if (!file || !file.type?.startsWith('image/')) throw new Error('이미지 파일만 업로드 가능');
-    const blobURL = URL.createObjectURL(file);
-    let bitmap;
-    try { bitmap = await createImageBitmap(file); }
-    catch {
-      const img = new Image(); img.decoding='async'; img.crossOrigin='anonymous'; img.src=blobURL; await img.decode(); bitmap=img;
-    }
-    let w=bitmap.width, h=bitmap.height;
-    const scale1 = Math.min(1, maxDim / Math.max(w,h)); w=Math.max(1,Math.round(w*scale1)); h=Math.max(1,Math.round(h*scale1));
-    const canvas=document.createElement('canvas'); const ctx=canvas.getContext('2d',{alpha:false,desynchronized:true});
-    let quality=0.85, dataURL='';
+  // ===== 유틸 =====
+  const readAsDataURL = f => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); });
 
-    const drawAndExport=async()=>{
-      canvas.width=w; canvas.height=h; ctx.drawImage(bitmap,0,0,w,h);
-      const blob=await new Promise(r=>canvas.toBlob(r,'image/jpeg',quality));
-      const kb=blob.size/1024;
-      if(kb<=targetKB){ dataURL=await new Promise((r,j)=>{const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.onerror=j; fr.readAsDataURL(blob);}); return true; }
-      return {tooBig:true,kb};
-    };
-    let r=await drawAndExport();
-    while(r&&r.tooBig){
-      if(quality>minQuality+stepQuality/2){ quality=Math.max(minQuality,+(quality-stepQuality).toFixed(2)); }
-      else { w=Math.max(320,Math.round(w*shrinkFactor)); h=Math.max(320,Math.round(h*shrinkFactor)); if(Math.max(w,h)<=320&&quality<=minQuality) break; }
-      r=await drawAndExport();
+  // 미리보기용: 어떤 포맷이 와도 JPEG dataURL로 변환 (HEIC, HEIF, AVIF 등)
+  async function makePreviewDataURL(file, maxDim = 1200){
+    if(!file?.type?.startsWith('image/')) throw new Error('이미지 파일만 업로드 가능');
+    try{
+      const bmp = await createImageBitmap(file);
+      let w=bmp.width, h=bmp.height;
+      const s=Math.min(1, maxDim/Math.max(w,h));
+      w=Math.max(1,Math.round(w*s)); h=Math.max(1,Math.round(h*s));
+      const cvs=document.createElement('canvas'); cvs.width=w; cvs.height=h;
+      const ctx=cvs.getContext('2d',{alpha:false,desynchronized:true});
+      ctx.drawImage(bmp,0,0,w,h); try{bmp.close&&bmp.close();}catch{}
+      return cvs.toDataURL('image/jpeg',0.9);
+    }catch{
+      // 브라우저가 비트맵 변환을 못하면 원본 dataURL
+      return await readAsDataURL(file);
     }
-    if(!dataURL){
-      const blob=await new Promise(res=>canvas.toBlob(res,'image/jpeg',quality));
-      dataURL=await new Promise((r,j)=>{const fr=new FileReader(); fr.onload=()=>r(fr.result); fr.onerror=j; fr.readAsDataURL(blob);});
-    }
-    URL.revokeObjectURL(blobURL); try{bitmap.close&&bitmap.close();}catch{}
-    return dataURL;
   }
 
-  fileA.onchange=async e=>{
-    const f=e.target.files?.[0]; if(!f) return;
-    prevA.src=URL.createObjectURL(f); // 미리보기
-    imgA=await compressToDataURL(f);
-  };
-  fileB.onchange=async e=>{
-    const f=e.target.files?.[0]; if(!f) return;
-    prevB.src=URL.createObjectURL(f);
-    imgB=await compressToDataURL(f);
-  };
-
-  // ===== 진행률 =====
-  function startProgress(){
-    hiSec.style.display='none'; personsSec.style.display='none'; shareSec.style.display='none';
-    statusEl.textContent='분석 준비 중…'; bar.style.width='0%';
-    let p=0; const t=setInterval(()=>{ p+=Math.floor(Math.random()*12)+8; if(p>=96)p=96; bar.style.width=p+'%'; statusEl.textContent=`${p}% 분석 중…`; },450);
-    return ()=>clearInterval(t);
+  // 서버 전송용: 강압축 + 크기 제한
+  async function compressToDataURL(file, maxDim = 1400){
+    const bmp = await createImageBitmap(file);
+    let w=bmp.width, h=bmp.height;
+    const s=Math.min(1, maxDim/Math.max(w,h));
+    w=Math.max(1,Math.round(w*s)); h=Math.max(1,Math.round(h*s));
+    const cvs=document.createElement('canvas'); cvs.width=w; cvs.height=h;
+    const ctx=cvs.getContext('2d',{alpha:false,desynchronized:true});
+    ctx.drawImage(bmp,0,0,w,h); try{bmp.close&&bmp.close();}catch{}
+    let q=0.7, out=cvs.toDataURL('image/jpeg',q);
+    // 512KB 이하가 되도록 품질 단계적으로 낮춤
+    const limit=512*1024;
+    while(out.length*0.75 > limit && q>0.35){
+      q-=0.08; out=cvs.toDataURL('image/jpeg',q);
+    }
+    return out;
   }
-  function finishProgress(){ bar.style.width='100%'; statusEl.textContent='분석 완료!'; }
 
-  // ===== 렌더 유틸 =====
   const li = s => `<li>${String(s||'')}</li>`;
   const listHtml = a => (a||[]).map(li).join('');
   function mini(title,obj){
@@ -286,49 +259,91 @@
     bizStrengths.innerHTML=listHtml(B.strengths); bizCautions.innerHTML=listHtml(B.cautions);
   }
 
-  // ===== 공유 링크 생성 + 기본 공유 시트 =====
+  // 진행률 바
+  function startProgress(){
+    sharePanel.style.display='none';
+    hiSec.style.display='none'; personsSec.style.display='none';
+    statusEl.textContent='분석 준비 중…'; bar.style.width='0%';
+    let p=0; const t=setInterval(()=>{ p+=Math.floor(Math.random()*12)+8; if(p>=96)p=96; bar.style.width=p+'%'; statusEl.textContent=`${p}% 분석 중…`; },450);
+    return ()=>clearInterval(t);
+  }
+  function finishProgress(){
+    bar.style.width='100%'; statusEl.textContent='분석 완료!';
+  }
+
+  // ===== 파일 선택 처리 (미리보기는 JPEG로, 전송은 압축본) =====
+  let imgA=null,imgB=null;
+  fileA.onchange = async e=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    try{
+      prevA.src = await makePreviewDataURL(f);
+      imgA = await compressToDataURL(f);
+    }catch(err){ console.error(err); alert('A 이미지 처리 중 오류가 발생했습니다.'); }
+  };
+  fileB.onchange = async e=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    try{
+      prevB.src = await makePreviewDataURL(f);
+      imgB = await compressToDataURL(f);
+    }catch(err){ console.error(err); alert('B 이미지 처리 중 오류가 발생했습니다.'); }
+  };
+
+  // 버튼에서 파일 선택 열기
+  pickA.addEventListener('click',()=>fileA.click());
+  pickB.addEventListener('click',()=>fileB.click());
+
+  // ===== 공유 =====
   async function createShareLink(payload){
     const r=await fetch('/api/share',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:payload})});
     const text=await r.text();
-    let j; try{ j=JSON.parse(text); }catch{ throw new Error(text?.slice(0,80)||'링크 생성 실패'); }
-    if(!r.ok) throw new Error(j?.error||'링크 생성 실패');
+    let j; try{ j=JSON.parse(text) }catch{ throw new Error(text||'서버 오류'); }
+    if(!r.ok) throw new Error(j?.error||'공유 링크 생성 실패');
     return j.url;
   }
-  async function systemShare(url){
-    const title='AI 관상궁합 결과';
-    const text='우리 궁합 결과를 확인해보세요! ✨';
-    if(navigator.share){
-      try { await navigator.share({title,text,url}); return true; } catch(e){ /* 취소 등 무시 */ }
+  async function shareResult(data){
+    try{
+      shareBtn.disabled=true; shareBtn.textContent='링크 생성 중…';
+      const url=await createShareLink(data);
+      const text='우리 궁합 결과를 확인해보세요! ✨';
+      // Web Share API
+      if(navigator.share){
+        await navigator.share({title:'AI 관상궁합 결과', text, url});
+      }else{
+        await navigator.clipboard.writeText(`${text}\n${url}`);
+        alert('링크를 클립보드에 복사했어요!');
+      }
+    }catch(e){
+      alert('공유에 실패했습니다: '+(e?.message||e));
+    }finally{
+      shareBtn.textContent='📤 결과 공유하기';
+      shareBtn.disabled=false;
     }
-    try{ await navigator.clipboard.writeText(url); alert('링크가 클립보드에 복사되었어요!'); return true; }
-    catch{ alert('공유에 실패했습니다. 링크: '+url); return false; }
   }
 
-  // ===== 분석 버튼 =====
+  // ===== 분석 =====
   analyzeBtn.onclick=async ()=>{
-    if(!imgA||!imgB){alert('A, B 사진을 모두 업로드해 주세요.');return;}
+    if(!imgA||!imgB){ alert('A, B 사진을 모두 업로드해 주세요.'); return; }
     const stop=startProgress(); analyzeBtn.disabled=true;
     try{
       const res=await fetch('/api/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imgA,imgB})});
-      const dataText=await res.text(); let data;
-      try{ data=JSON.parse(dataText);}catch(e){ throw new Error(dataText?.slice(0,120)||'서버 응답 파싱 실패'); }
+      const text=await res.text(); let data;
+      try{ data=JSON.parse(text) }catch{ throw new Error(text||'서버 응답 파싱 실패'); }
+
+      if(!res.ok) throw new Error(data?.error||'분석 실패');
 
       renderHighlights(data); renderPersons(data.personA,data.personB);
-      hiSec.style.display=''; personsSec.style.display=''; shareSec.style.display='';
+      hiSec.style.display=''; personsSec.style.display='';
       stop(); finishProgress();
 
-      // 공유 버튼 핸들러
-      shareBtn.onclick=async()=>{
-        try{
-          shareBtn.disabled=true; shareBtn.textContent='링크 생성 중…';
-          const url=await createShareLink(data);
-          await systemShare(url);
-        }catch(e){ alert('공유 실패: '+(e?.message||e)); }
-        finally{ shareBtn.textContent='📤 결과 공유하기'; shareBtn.disabled=false; }
-      };
-
-    }catch(e){ stop(); finishProgress(); alert('분석 중 오류가 발생했습니다.\n'+(e?.message||e)); }
-    finally{ analyzeBtn.disabled=false; }
+      // 하단 공유 패널 활성화
+      sharePanel.style.display='';
+      shareBtn.onclick=()=>shareResult(data);
+    }catch(e){
+      stop(); finishProgress();
+      alert('분석 중 오류가 발생했습니다.\n'+(e?.message||e));
+    }finally{
+      analyzeBtn.disabled=false;
+    }
   };
 </script>
 </body>
