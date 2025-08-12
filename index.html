@@ -1,56 +1,267 @@
-// /api/share.js
-export default async function handler(req, res) {
-  try {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
-
-    const { result, pics = {}, ttl = 60 * 60 * 24 * 7 } = await readJSON(req);
-    if (!result) return res.status(400).json({ error: 'missing result' }); // ← 400 원인
-
-    // Upstash KV (Environment Variables 필요)
-    const { KV_REST_API_URL, KV_REST_API_TOKEN } = process.env;
-    if (!KV_REST_API_URL || !KV_REST_API_TOKEN) {
-      return res.status(500).json({ error: 'KV not configured' });
-    }
-
-    // 저장 payload
-    const payload = {
-      result,
-      pics,
-      createdAt: Date.now()
-    };
-
-    const id = crypto.randomUUID();
-    const value = JSON.stringify(payload);
-
-    // Upstash REST: set/{key}/{value}?EX=ttl
-    const url = `${KV_REST_API_URL}/set/${id}/${encodeURIComponent(value)}?EX=${ttl}`;
-    const up = await fetch(url, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${KV_REST_API_TOKEN}` }
-    });
-    const upJson = await up.json();
-    if (!up.ok || upJson?.result !== 'OK') {
-      return res.status(500).json({ error: 'kv set failed' });
-    }
-
-    // 공유 URL 반환 (예: https://도메인/?r=<id>)
-    const base =
-      (req.headers['x-forwarded-proto'] ? req.headers['x-forwarded-proto'] : 'https') +
-      '://' + req.headers.host;
-    const shareUrl = `${base}/?r=${id}`;
-    res.status(200).json({ url: shareUrl });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: e?.message || 'server error' });
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI 관상궁합</title>
+<meta name="color-scheme" content="dark light" />
+<style>
+  :root{
+    --bg:#0b1220; --panel:#0f172a; --panel2:#0d1628;
+    --ink:#ffffff; --muted:#cfe1ff; --sub:#e7efff;
+    --accent:#7c3aed; --accent2:#22d3ee; --line:#20314d;
   }
-}
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f6f8fc; --panel:#ffffff; --panel2:#ffffff;
+      --ink:#0b1320; --muted:#24324a; --sub:#1b2740; --line:#e7edf5;
+      --accent:#6d28d9; --accent2:#0891b2;
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,Helvetica,Arial}
+  .wrap{max-width:1040px;margin:0 auto;padding:16px}
 
-async function readJSON(req) {
-  const buf = await new Promise((resolve, reject) => {
-    let d = '';
-    req.on('data', (c) => (d += c));
-    req.on('end', () => resolve(d));
-    req.on('error', reject);
-  });
-  try { return JSON.parse(buf || '{}'); } catch { return {}; }
-}
+  /* 헤더 대비 ↑ */
+  header{position:sticky;top:0;z-index:5;
+    background:linear-gradient(90deg,#0b1323,#081024);
+    border-bottom:1px solid #ffffff22;box-shadow:0 6px 18px #0006}
+  .brand{display:flex;gap:12px;align-items:center;padding:14px 8px}
+  .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--accent2),var(--accent));box-shadow:0 6px 18px #0008}
+  .brand h1{margin:0;font-size:22px;font-weight:900;letter-spacing:.2px;color:#fff}
+  .brand p{margin:2px 0 0;color:#e8f2ff;font-weight:700}
+
+  .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:16px;padding:16px}
+  .grid{display:grid;gap:16px}
+  @media(min-width:960px){ .grid{grid-template-columns:1fr 1fr} }
+
+  /* 업로더 */
+  .slot{position:relative;border:1px dashed #5c6b85;background:#0b1424;border-radius:16px;padding:10px}
+  .slot .preview{
+    display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;
+    border:1px solid #1e2a40;background:#0b1424;
+  }
+  /* alt 텍스트/깨진 이미지 아이콘 숨김 */
+  .slot .preview:not([src]), .slot .preview[src=""]{opacity:1}
+  .slot .choose{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
+    padding:12px 18px;border-radius:12px;border:1px solid #ffffff28;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:900;cursor:pointer}
+  input[type=file]{display:none}
+
+  .meter{height:10px;border-radius:999px;background:#0d1628;border:1px solid #182a48;overflow:hidden}
+  .meter>div{height:100%;width:0%;background:linear-gradient(90deg,var(--accent2),var(--accent))}
+  .status{margin-top:8px;color:#e7efff;font-weight:900}
+
+  .actions{display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+  .btn{border:none;border-radius:14px;padding:14px 18px;font-weight:900;cursor:pointer;transition:.2s}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;min-width:240px}
+  .btn.secondary{background:#123; border:1px solid #2a3b5b;color:#dfe7fb;min-width:240px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  h2.section-title{margin:0 0 10px;font-size:20px;font-weight:900;color:#fff}
+
+  .card{background:#0e1728;border:1px solid #22324f;border-radius:16px;padding:14px;margin-top:12px;color:#eaf2ff}
+  .list{margin:6px 0 0 0;padding:0 0 0 18px}
+  .list li{margin:6px 0}
+  .row{display:flex;gap:12px;align-items:center;margin-bottom:6px}
+  .pill{display:inline-block;border-radius:999px;border:1px solid #2a3a5c;background:#0f1a31;padding:6px 10px;color:#dfe7fb;font-weight:800}
+
+  .scoreBadge{min-width:64px;height:64px;border-radius:50%;
+    background:radial-gradient(70% 70% at 30% 30%,#a78bfa 0%,#60a5fa 60%,#22d3ee 100%);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:900;font-size:22px;box-shadow:0 6px 18px #0008;margin-right:12px}
+
+  .mini{background:#0d1426;border:1px solid #1e2d4a;border-radius:14px;padding:12px;margin-top:12px}
+  .mini h4{margin:0 0 8px;font-size:15px;font-weight:900;color:#fff}
+  .mini .reason,.mini .verdict{font-weight:800}
+  .mini .tips{margin:8px 0 0 16px}
+  .dim{color:#e9f2ff}
+
+  footer{margin:20px 0;color:#cfe1ff;text-align:center}
+  footer a{color:#fff;font-weight:800}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap brand">
+    <div class="logo" aria-hidden="true"></div>
+    <div>
+      <h1>AI 관상궁합</h1>
+      <p>두 사람의 얼굴 사진을 업로드하면, 심층 궁합 분석을 제공합니다. (재미로만 보세요!)</p>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- 업로드 -->
+  <section class="panel">
+    <h2 class="section-title">사진 업로드</h2>
+    <div class="grid">
+      <div class="slot">
+        <!-- 미리보기 텍스트/아이콘 제거: alt="" -->
+        <img id="prevA" class="preview" alt="" />
+        <input id="fileA" type="file" accept="image/*" />
+        <button id="pickA" class="choose">A 사진 업로드</button>
+      </div>
+      <div class="slot">
+        <img id="prevB" class="preview" alt="" />
+        <input id="fileB" type="file" accept="image/*" />
+        <button id="pickB" class="choose">B 사진 업로드</button>
+      </div>
+    </div>
+
+    <div style="margin-top:14px">
+      <div class="meter"><div id="bar"></div></div>
+      <div id="status" class="status">대기 중…</div>
+    </div>
+
+    <div class="actions">
+      <button id="analyze" class="btn primary">🔮 관상궁합 분석하기</button>
+      <button id="shareBtn" class="btn secondary" disabled>🗂️ 공유 링크 복사</button>
+    </div>
+  </section>
+
+  <!-- 하이라이트 -->
+  <section id="hi" class="panel" style="margin-top:16px;display:none">
+    <h2 class="section-title">결과 하이라이트</h2>
+
+    <div id="loveCard" class="card">
+      <div class="row">
+        <div class="scoreBadge" id="loveScore">–</div>
+        <div>
+          <div style="font-weight:900">💖 연애/우정 궁합</div>
+          <div id="loveSummary" class="dim">분석 중…</div>
+        </div>
+      </div>
+      <div class="mini">
+        <h4>잘 맞는 점</h4>
+        <ul id="loveStrengths" class="list"></ul>
+        <h4 style="margin-top:10px">조심해야 할 점</h4>
+        <ul id="loveCautions" class="list"></ul>
+      </div>
+    </div>
+
+    <div id="bizCard" class="card">
+      <div class="row">
+        <div class="scoreBadge" id="bizScore">–</div>
+        <div>
+          <div style="font-weight:900">💼 비즈니스 궁합</div>
+          <div id="bizSummary" class="dim">분석 중…</div>
+        </div>
+      </div>
+      <div class="mini">
+        <h4>잘 맞는 점</h4>
+        <ul id="bizStrengths" class="list"></ul>
+        <h4 style="margin-top:10px">조심해야 할 점</h4>
+        <ul id="bizCautions" class="list"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 개인별 -->
+  <section id="persons" class="panel" style="margin-top:16px;display:none">
+    <h2 class="section-title">👤 개인별 관상 특징 & 운세</h2>
+
+    <div id="personA" class="card">
+      <div class="row"><span class="pill">A</span><span class="dim">관상 기반 운세</span></div>
+      <div id="aFortunes"></div>
+    </div>
+
+    <div id="personB" class="card">
+      <div class="row"><span class="pill">B</span><span class="dim">관상 기반 운세</span></div>
+      <div id="bFortunes"></div>
+    </div>
+  </section>
+
+  <footer>© 2025 AI 관상궁합 · 문의: <a href="mailto:dongja279@gmail.com">dongja279@gmail.com</a></footer>
+</main>
+
+<script>
+  // 엘리먼트
+  const pickA=document.getElementById('pickA'), pickB=document.getElementById('pickB');
+  const fileA=document.getElementById('fileA'), fileB=document.getElementById('fileB');
+  const prevA=document.getElementById('prevA'), prevB=document.getElementById('prevB');
+  const analyzeBtn=document.getElementById('analyze'), shareBtn=document.getElementById('shareBtn');
+  const bar=document.getElementById('bar'), statusEl=document.getElementById('status');
+  const hiSec=document.getElementById('hi'), personsSec=document.getElementById('persons');
+
+  const loveScore=document.getElementById('loveScore'), loveSummary=document.getElementById('loveSummary');
+  const loveStrengths=document.getElementById('loveStrengths'), loveCautions=document.getElementById('loveCautions');
+  const bizScore=document.getElementById('bizScore'), bizSummary=document.getElementById('bizSummary');
+  const bizStrengths=document.getElementById('bizStrengths'), bizCautions=document.getElementById('bizCautions');
+  const aFortunes=document.getElementById('aFortunes'), bFortunes=document.getElementById('bFortunes');
+
+  // 파일
+  const readAsDataURL = f => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); });
+  pickA.onclick=()=>fileA.click(); pickB.onclick=()=>fileB.click();
+  let imgA=null,imgB=null;
+  fileA.onchange=async e=>{const f=e.target.files?.[0]; if(!f) return; imgA=await readAsDataURL(f); prevA.src=imgA;}
+  fileB.onchange=async e=>{const f=e.target.files?.[0]; if(!f) return; imgB=await readAsDataURL(f); prevB.src=imgB;}
+
+  // 진행률
+  function startProgress(){
+    shareBtn.disabled=true; hiSec.style.display='none'; personsSec.style.display='none';
+    statusEl.textContent='분석 준비 중…'; bar.style.width='0%';
+    let p=0; const t=setInterval(()=>{ p+=Math.floor(Math.random()*12)+8; if(p>=96)p=96; bar.style.width=p+'%'; statusEl.textContent=p+'% 분석 중…'; },450);
+    return ()=>clearInterval(t);
+  }
+  function finishProgress(){ bar.style.width='100%'; statusEl.textContent='분석 완료!'; }
+
+  // 유틸
+  const li = s => `<li>${String(s||'')}</li>`;
+  const listHtml = a => (a||[]).map(li).join('');
+  function mini(title,obj){
+    return `<div class="mini">
+      <h4>${title}</h4>
+      <div class="reason"><b>근거:</b> ${String(obj?.reason||'')}</div>
+      <div class="verdict"><b>결론:</b> ${String(obj?.verdict||'')}</div>
+      ${(obj?.tips?.length? `<ul class="tips">${listHtml(obj.tips)}</ul>`:'')}
+    </div>`;
+  }
+  function renderPersons(pA,pB){
+    aFortunes.innerHTML= mini('💰 재물운',pA?.wealth)+mini('💖 연애운',pA?.love)+mini('💪 건강운',pA?.health);
+    bFortunes.innerHTML= mini('💰 재물운',pB?.wealth)+mini('💖 연애운',pB?.love)+mini('💪 건강운',pB?.health);
+  }
+  function renderHighlights(d){
+    const L=d?.compatibility?.love_friendship||{}, B=d?.compatibility?.business||{};
+    loveScore.textContent=(L.score??'–'); loveSummary.textContent=L.summary||'—';
+    loveStrengths.innerHTML=listHtml(L.strengths); loveCautions.innerHTML=listHtml(L.cautions);
+    bizScore.textContent=(B.score??'–'); bizSummary.textContent=B.summary||'—';
+    bizStrengths.innerHTML=listHtml(B.strengths); bizCautions.innerHTML=listHtml(B.cautions);
+  }
+
+  async function createShareLink(payload){
+    const r=await fetch('/api/share',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:payload})});
+    const j=await r.json(); if(!r.ok) throw new Error(j?.error||'공유 링크 생성 실패'); return j.url;
+  }
+
+  // 분석
+  analyzeBtn.onclick=async ()=>{
+    if(!imgA||!imgB){alert('A, B 사진을 모두 업로드해 주세요.');return;}
+    const stop=startProgress(); analyzeBtn.disabled=true;
+    try{
+      const res=await fetch('/api/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imgA,imgB})});
+      const data=await res.json(); if(!res.ok) throw new Error(data?.error||'분석 실패');
+
+      renderHighlights(data); renderPersons(data.personA,data.personB);
+      hiSec.style.display=''; personsSec.style.display=''; stop(); finishProgress();
+
+      shareBtn.disabled=false;
+      shareBtn.onclick=async()=>{
+        try{
+          shareBtn.disabled=true; shareBtn.textContent='링크 생성 중…';
+          const url=await createShareLink(data);
+          await navigator.clipboard.writeText(url);
+          shareBtn.textContent='✅ 링크 복사됨';
+          setTimeout(()=>{shareBtn.textContent='🗂️ 공유 링크 복사'; shareBtn.disabled=false;},1500);
+        }catch(e){ alert('링크 생성 실패: '+(e?.message||e)); shareBtn.textContent='🗂️ 공유 링크 복사'; shareBtn.disabled=false; }
+      };
+
+    }catch(e){ stop(); finishProgress(); alert('분석 중 오류가 발생했습니다.\n'+(e?.message||e)); }
+    finally{ analyzeBtn.disabled=false; }
+  };
+</script>
+</body>
+</html>
