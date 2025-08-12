@@ -8,13 +8,13 @@
 <style>
   :root{
     --bg:#0b1220; --panel:#0f172a; --panel2:#0d1628;
-    --ink:#ffffff; --muted:#cfe1ff; --sub:#e7efff;
+    --ink:#ffffff; --muted:#eaf2ff; --sub:#ffffff;
     --accent:#7c3aed; --accent2:#22d3ee; --line:#20314d;
   }
   @media (prefers-color-scheme: light){
     :root{
       --bg:#f6f8fc; --panel:#ffffff; --panel2:#ffffff;
-      --ink:#0b1320; --muted:#24324a; --sub:#1b2740; --line:#e7edf5;
+      --ink:#0b1320; --muted:#1c2b45; --sub:#0b1320; --line:#e7edf5;
       --accent:#6d28d9; --accent2:#0891b2;
     }
   }
@@ -29,7 +29,7 @@
     border-bottom:1px solid #ffffff22;box-shadow:0 6px 18px #0006}
   .brand{display:flex;gap:12px;align-items:center;padding:14px 8px}
   .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--accent2),var(--accent));box-shadow:0 6px 18px #0008}
-  .brand h1{margin:0;font-size:22px;font-weight:900;color:#fff}
+  .brand h1{margin:0;font-size:22px;font-weight:900;letter-spacing:.2px;color:#fff}
   .brand p{margin:2px 0 0;color:#e8f2ff;font-weight:700}
 
   .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));
@@ -43,7 +43,7 @@
     display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;
     border:1px solid #1e2a40;background:#0b1424;
   }
-  /* alt 숨김 */
+  /* alt 텍스트/깨진 이미지 아이콘 숨김 */
   .slot .preview:not([src]), .slot .preview[src=""]{opacity:1}
   .slot .choose{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
     padding:12px 18px;border-radius:12px;border:1px solid #ffffff28;
@@ -52,21 +52,21 @@
 
   .meter{height:10px;border-radius:999px;background:#0d1628;border:1px solid #182a48;overflow:hidden}
   .meter>div{height:100%;width:0%;background:linear-gradient(90deg,var(--accent2),var(--accent))}
-  .status{margin-top:8px;color:#e7efff;font-weight:900}
+  .status{margin-top:8px;color:#fff;font-weight:900;letter-spacing:.2px;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 
   .actions{display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap}
   .btn{border:none;border-radius:14px;padding:14px 18px;font-weight:900;cursor:pointer;transition:.2s}
   .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;min-width:240px}
-  .btn.secondary{background:#123; border:1px solid #2a3b5b;color:#dfe7fb;min-width:240px}
-  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.secondary{background:#123; border:1px solid #2a3b5b;color:#fff;min-width:240px}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
 
   h2.section-title{margin:0 0 10px;font-size:20px;font-weight:900;color:#fff}
 
-  .card{background:#0e1728;border:1px solid #22324f;border-radius:16px;padding:14px;margin-top:12px;color:#eaf2ff}
+  .card{background:#0e1728;border:1px solid #22324f;border-radius:16px;padding:14px;margin-top:12px;color:#fff}
   .list{margin:6px 0 0 0;padding:0 0 0 18px}
   .list li{margin:6px 0}
   .row{display:flex;gap:12px;align-items:center;margin-bottom:6px}
-  .pill{display:inline-block;border-radius:999px;border:1px solid #2a3a5c;background:#0f1a31;padding:6px 10px;color:#dfe7fb;font-weight:800}
+  .pill{display:inline-block;border-radius:999px;border:1px solid #2a3a5c;background:#0f1a31;padding:6px 10px;color:#fff;font-weight:800}
 
   .scoreBadge{min-width:64px;height:64px;border-radius:50%;
     background:radial-gradient(70% 70% at 30% 30%,#a78bfa 0%,#60a5fa 60%,#22d3ee 100%);
@@ -75,12 +75,14 @@
 
   .mini{background:#0d1426;border:1px solid #1e2d4a;border-radius:14px;padding:12px;margin-top:12px}
   .mini h4{margin:0 0 8px;font-size:15px;font-weight:900;color:#fff}
-  .mini .reason,.mini .verdict{font-weight:800}
+  .mini .reason,.mini .verdict{font-weight:850;color:#fff}
   .mini .tips{margin:8px 0 0 16px}
-  .dim{color:#e9f2ff}
+  .dim{color:#f5f8ff}  /* 강조 가독성 ↑ */
 
-  footer{margin:20px 0;color:#cfe1ff;text-align:center}
-  footer a{color:#fff;font-weight:800}
+  .shareArea{display:flex;justify-content:center;margin-top:18px}
+
+  footer{margin:24px 0;color:#e6efff;text-align:center;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+  footer a{color:#fff;font-weight:900;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -118,7 +120,6 @@
 
     <div class="actions">
       <button id="analyze" class="btn primary">🔮 관상궁합 분석하기</button>
-      <button id="shareBtn" class="btn secondary" disabled>🗂️ 공유 링크 복사</button>
     </div>
   </section>
 
@@ -172,13 +173,18 @@
       <div class="row"><span class="pill">B</span><span class="dim">관상 기반 운세</span></div>
       <div id="bFortunes"></div>
     </div>
+
+    <!-- 공유 버튼: 결과 맨 하단 -->
+    <div class="shareArea">
+      <button id="shareBtn" class="btn secondary" disabled>🗂️ 공유 링크 복사</button>
+    </div>
   </section>
 
   <footer>© 2025 AI 관상궁합 · 문의: <a href="mailto:dongja279@gmail.com">dongja279@gmail.com</a></footer>
 </main>
 
 <script>
-  // 엘리먼트
+  // 요소
   const pickA=document.getElementById('pickA'), pickB=document.getElementById('pickB');
   const fileA=document.getElementById('fileA'), fileB=document.getElementById('fileB');
   const prevA=document.getElementById('prevA'), prevB=document.getElementById('prevB');
@@ -231,13 +237,8 @@
     bizStrengths.innerHTML=listHtml(B.strengths); bizCautions.innerHTML=listHtml(B.cautions);
   }
 
-  // *** 공유 링크 API 호출: 서버가 요구하는 { result, type } 로 전송 ***
   async function createShareLink(payload){
-    const r=await fetch('/api/share',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ result: payload, type: 'match' })
-    });
+    const r=await fetch('/api/share',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:payload})});
     const j=await r.json(); if(!r.ok) throw new Error(j?.error||'공유 링크 생성 실패'); return j.url;
   }
 
@@ -252,21 +253,41 @@
       renderHighlights(data); renderPersons(data.personA,data.personB);
       hiSec.style.display=''; personsSec.style.display=''; stop(); finishProgress();
 
+      // 결과 하단 공유버튼
       shareBtn.disabled=false;
       shareBtn.onclick=async()=>{
         try{
-          shareBtn.disabled=true; const prev=shareBtn.textContent;
-          shareBtn.textContent='링크 생성 중…';
+          shareBtn.disabled=true; shareBtn.textContent='링크 생성 중…';
           const url=await createShareLink(data);
           await navigator.clipboard.writeText(url);
           shareBtn.textContent='✅ 링크 복사됨';
-          setTimeout(()=>{shareBtn.textContent=prev; shareBtn.disabled=false;},1500);
+          setTimeout(()=>{shareBtn.textContent='🗂️ 공유 링크 복사'; shareBtn.disabled=false;},1500);
         }catch(e){ alert('링크 생성 실패: '+(e?.message||e)); shareBtn.textContent='🗂️ 공유 링크 복사'; shareBtn.disabled=false; }
       };
 
     }catch(e){ stop(); finishProgress(); alert('분석 중 오류가 발생했습니다.\n'+(e?.message||e)); }
     finally{ analyzeBtn.disabled=false; }
   };
+
+  // 공유 페이지 로딩( /?r=... )
+  async function loadSharedOnOpen(){
+    const qs=new URLSearchParams(location.search); const id=qs.get('r'); if(!id) return;
+    statusEl.textContent='분석 완료!'; bar.style.width='100%';
+    try{
+      const r=await fetch(`/api/get?id=${encodeURIComponent(id)}`); const j=await r.json();
+      if(!r.ok) throw new Error(j?.error||'불러오기 실패');
+      const data=j.result||j;
+      renderHighlights(data); renderPersons(data.personA,data.personB);
+      hiSec.style.display=''; personsSec.style.display='';
+      // 공유 페이지에서도 하단 공유 가능(현재 URL 복사)
+      shareBtn.disabled=false;
+      shareBtn.onclick=async()=>{ await navigator.clipboard.writeText(location.href);
+        shareBtn.textContent='✅ 링크 복사됨'; setTimeout(()=>shareBtn.textContent='🗂️ 공유 링크 복사',1500); };
+      // 업로드 섹션은 공유 페이지에선 남겨둬도 되지만, 깔끔히 유지하려면 아래 주석 해제:
+      // document.querySelector('main .panel')?.remove();
+    }catch(e){ alert('공유 결과를 불러오지 못했습니다.\n'+(e?.message||e)); }
+  }
+  document.addEventListener('DOMContentLoaded', loadSharedOnOpen);
 </script>
 </body>
 </html>
