@@ -7,89 +7,106 @@
 <meta name="color-scheme" content="dark light" />
 <style>
   :root{
-    /* 높은 대비(모바일 가독성 ↑) */
+    /* 고대비 팔레트 – 모바일 가독성 강화 */
     --bg:#0a1120; --panel:#0e172a; --panel2:#0b1426;
-    --ink:#f7fbff; --ink-strong:#ffffff; --sub:#eaf2ff; --muted:#d9e6ff;
-    --line:#22304a;
+    --ink:#f2f7ff; --ink-strong:#ffffff; --ink-stronger:#ffffff;
+    --muted:#e7efff; --line:#23314e;
     --accent:#7c3aed; --accent2:#22d3ee; --ok:#10b981; --warn:#f59e0b;
   }
   @media (prefers-color-scheme: light){
     :root{
       --bg:#f6f8fc; --panel:#ffffff; --panel2:#ffffff;
-      --ink:#0b1320; --ink-strong:#000; --sub:#1b2740; --muted:#22324a; --line:#e7edf5;
+      --ink:#0b1320; --ink-strong:#000; --ink-stronger:#000;
+      --muted:#1a2742; --line:#e7edf5;
       --accent:#6d28d9; --accent2:#0891b2; --ok:#059669; --warn:#b45309;
     }
   }
+
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,Helvetica,Arial}
+  html,body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,Helvetica,Arial;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    text-rendering:optimizeLegibility;
+  }
   .wrap{max-width:1040px;margin:0 auto;padding:16px}
 
-  /* 헤더 */
-  header{position:sticky;top:0;z-index:5;
+  /* 헤더: 완전 불투명, 텍스트 강하게 */
+  header{
+    position:sticky;top:0;z-index:5;
     background:linear-gradient(90deg,#0b1323,#081024);
-    border-bottom:1px solid #ffffff22;box-shadow:0 6px 18px #0006}
-  .brand{display:flex;gap:12px;align-items:center;padding:14px 8px}
-  .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--accent2),var(--accent));box-shadow:0 6px 18px #0008}
-  .brand h1{margin:0;font-size:22px;font-weight:900;letter-spacing:.2px;color:var(--ink-strong)}
-  .brand p{margin:2px 0 0;color:var(--muted);font-weight:700}
+    border-bottom:1px solid #ffffff26;box-shadow:0 8px 20px #0007
+  }
+  .brand{display:flex;gap:12px;align-items:center;padding:16px 8px}
+  .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--accent2),var(--accent));box-shadow:0 6px 18px #000a}
+  .brand h1{margin:0;font-size:22px;font-weight:900;letter-spacing:.2px;color:var(--ink-stronger);text-shadow:0 1px 0 #0008}
+  .brand p{margin:4px 0 0;color:var(--ink-strong);font-weight:800;opacity:1}
 
-  /* 공통 카드/패널 */
+  /* 공통 패널/카드 */
   .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));
     border:1px solid var(--line);border-radius:16px;padding:16px}
   .grid{display:grid;gap:16px}
   @media(min-width:960px){ .grid{grid-template-columns:1fr 1fr} }
-  h2.section-title{margin:0 0 12px;font-size:20px;font-weight:900;color:var(--ink-strong)}
+  h2.section-title{
+    margin:0 0 12px;font-size:22px;font-weight:900;color:var(--ink-stronger)
+  }
 
   /* 업로더 */
   .slot{position:relative;border:1px dashed #5c6b85;background:#0b1424;border-radius:16px;padding:10px}
   .slot .preview{
     display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;
-    border:1px solid #1e2a40;background:#0b1424;
+    border:1px solid #1e2a40;background:#0b1424;color:transparent /* alt/아이콘 보이지 않게 */
   }
-  /* alt/아이콘 숨김 */
-  .slot .preview[alt]{color:transparent}
   .slot .choose{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
     padding:12px 18px;border-radius:12px;border:1px solid #ffffff40;
     background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:900;cursor:pointer}
   input[type=file]{display:none}
 
   /* 진행률 */
-  .meter{height:10px;border-radius:999px;background:#0d1628;border:1px solid #182a48;overflow:hidden}
+  .meter{height:12px;border-radius:999px;background:#0d1628;border:1px solid #182a48;overflow:hidden}
   .meter>div{height:100%;width:0%;background:linear-gradient(90deg,var(--accent2),var(--accent))}
-  .status{margin-top:8px;color:var(--ink-strong);font-weight:900}
+  .status{margin-top:8px;color:var(--ink-stronger);font-weight:900;font-size:15px}
 
   /* 버튼 */
   .actions{display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap}
   .btn{border:none;border-radius:14px;padding:14px 18px;font-weight:900;cursor:pointer;transition:.2s}
   .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;min-width:240px}
-  .btn.secondary{background:#193048; border:1px solid #2a3b5b;color:#f0f6ff;min-width:240px}
-  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.secondary{background:#193048; border:1px solid #2a3b5b;color:#f7fbff;min-width:260px}
+  .btn:disabled{opacity:.55;cursor:not-allowed}
 
-  /* 결과 카드 */
-  .card{background:#0e1728;border:1px solid #22324f;border-radius:16px;padding:14px;margin-top:12px;color:#f0f6ff}
-  .row{display:flex;gap:12px;align-items:center;margin-bottom:6px}
-  .scoreBadge{min-width:64px;height:64px;border-radius:50%;
+  /* 결과 카드 (제목/소제목 진하게) */
+  .card{background:#0e1728;border:1px solid #22324f;border-radius:16px;padding:16px;margin-top:12px;color:#f7fbff}
+  .row{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+  .scoreBadge{min-width:72px;height:72px;border-radius:50%;
     background:radial-gradient(70% 70% at 30% 30%,#a78bfa 0%,#60a5fa 60%,#22d3ee 100%);
     display:flex;align-items:center;justify-content:center;
-    color:#fff;font-weight:900;font-size:22px;box-shadow:0 6px 18px #0008;margin-right:12px}
-  .dim{color:#eaf2ff}
+    color:#fff;font-weight:900;font-size:24px;box-shadow:0 6px 18px #0009;margin-right:12px}
+  .title-strong{font-weight:900;color:var(--ink-stronger);font-size:18px}
 
-  /* 소카드(개인 운세) */
-  .mini{background:#0d1426;border:1px solid #1e2d4a;border-radius:14px;padding:12px;margin-top:12px}
-  .mini h4{margin:0 0 8px;font-size:15px;font-weight:900;color:var(--ink-strong)}
-  .mini .reason,.mini .verdict{font-weight:800;color:#f4f8ff}
+  .mini{background:#0d1426;border:1px solid #1e2d4a;border-radius:14px;padding:14px;margin-top:12px}
+  .mini h4{margin:0 0 10px;font-size:16px;font-weight:900;color:var(--ink-stronger)}
+  .mini .reason,.mini .verdict{font-weight:900;color:#ffffff}
   .list{margin:6px 0 0 0;padding:0 0 0 18px}
-  .list li{margin:6px 0}
+  .list li{margin:7px 0}
 
-  .pill{display:inline-block;border-radius:999px;border:1px solid #2a3a5c;background:#0f1a31;padding:6px 10px;color:#eaf2ff;font-weight:800}
+  .pill{display:inline-block;border-radius:999px;border:1px solid #2a3a5c;background:#0f1a31;padding:6px 10px;color:#fff;font-weight:900}
 
   /* 하단 공유 영역 */
   .shareArea{margin-top:18px;text-align:center}
   .shareArea .btn{min-width:260px}
 
-  footer{margin:24px 0;color:#cfe1ff;text-align:center}
-  footer a{color:#fff;font-weight:800}
+  footer{margin:26px 0;color:#cfe1ff;text-align:center}
+  footer a{color:#fff;font-weight:900}
+
+  /* 모바일 타이포 보강 */
+  @media (max-width:480px){
+    .brand h1{font-size:20px}
+    .brand p{font-size:14px}
+    h2.section-title{font-size:20px}
+    .title-strong{font-size:17px}
+    .mini h4{font-size:15px}
+    .status{font-size:14px}
+  }
 </style>
 </head>
 <body>
@@ -130,7 +147,7 @@
     </div>
   </section>
 
-  <!-- 하이라이트 (두괄식) -->
+  <!-- 두괄식 하이라이트 -->
   <section id="hi" class="panel" style="margin-top:16px;display:none">
     <h2 class="section-title">결과 하이라이트</h2>
 
@@ -138,8 +155,8 @@
       <div class="row">
         <div class="scoreBadge" id="loveScore">–</div>
         <div>
-          <div style="font-weight:900;color:var(--ink-strong)">💖 연애/우정 궁합</div>
-          <div id="loveSummary" class="dim">분석 중…</div>
+          <div class="title-strong">💖 연애/우정 궁합</div>
+          <div id="loveSummary" style="font-weight:800;color:#fff">분석 중…</div>
         </div>
       </div>
       <div class="mini">
@@ -154,8 +171,8 @@
       <div class="row">
         <div class="scoreBadge" id="bizScore">–</div>
         <div>
-          <div style="font-weight:900;color:var(--ink-strong)">💼 비즈니스 궁합</div>
-          <div id="bizSummary" class="dim">분석 중…</div>
+          <div class="title-strong">💼 비즈니스 궁합</div>
+          <div id="bizSummary" style="font-weight:800;color:#fff">분석 중…</div>
         </div>
       </div>
       <div class="mini">
@@ -172,12 +189,12 @@
     <h2 class="section-title">👤 개인별 관상 특징 & 운세</h2>
 
     <div id="personA" class="card">
-      <div class="row"><span class="pill">A</span><span class="dim">관상 기반 운세</span></div>
+      <div class="row"><span class="pill">A</span><span style="font-weight:900;color:#fff">관상 기반 운세</span></div>
       <div id="aFortunes"></div>
     </div>
 
     <div id="personB" class="card">
-      <div class="row"><span class="pill">B</span><span class="dim">관상 기반 운세</span></div>
+      <div class="row"><span class="pill">B</span><span style="font-weight:900;color:#fff">관상 기반 운세</span></div>
       <div id="bFortunes"></div>
     </div>
 
@@ -237,15 +254,15 @@
   }
   function renderHighlights(d){
     const L=d?.compatibility?.love_friendship||{}, B=d?.compatibility?.business||{};
-    loveScore.textContent=(L.score??'–'); loveSummary.textContent=L.summary||'—';
+    loveScore.textContent=(L.score??'–'); loveSummary.textContent=L.summary||' ';
     loveStrengths.innerHTML=listHtml(L.strengths); loveCautions.innerHTML=listHtml(L.cautions);
-    bizScore.textContent=(B.score??'–'); bizSummary.textContent=B.summary||'—';
+    bizScore.textContent=(B.score??'–'); bizSummary.textContent=B.summary||' ';
     bizStrengths.innerHTML=listHtml(B.strengths); bizCautions.innerHTML=listHtml(B.cautions);
   }
 
-  // 공유 링크 생성(텍스트/JSON 안전 처리)
+  // 공유 링크 생성 – 항상 share.html 로
   async function createShareLink(payload){
-    // payload가 객체면 JSON 문자열, 문자열이면 그대로 저장
+    // 서버가 문자열/JSON 어떤 걸 받아도 되도록 안전 처리
     let bodyData;
     if (typeof payload === 'string') {
       bodyData = payload;
@@ -256,13 +273,25 @@
     const res = await fetch('/api/share',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ data: bodyData, type: 'match' })
+      body:JSON.stringify({ data: bodyData, type:'match' })
     });
     const text = await res.text();
-    let json;
-    try{ json = JSON.parse(text); }catch{ json = {error: text}; }
-    if(!res.ok || !json?.url) throw new Error(json?.error || '공유 링크 생성 실패');
-    return json.url;
+    let json; try{ json = JSON.parse(text); }catch{ json = {error:text}; }
+    if(!res.ok) throw new Error(json?.error || '공유 링크 생성 실패');
+
+    // API가 url을 주면 그대로 쓰고, 아니면 id로 share.html 구성
+    const gotUrl = json?.url;
+    if (gotUrl) {
+      try {
+        // 루트로 반환된 경우도 share.html로 강제 교체
+        const u = new URL(gotUrl);
+        u.pathname = '/share.html';
+        return u.toString();
+      } catch { /* 그냥 아래로 */ }
+    }
+    const id = json?.id || json?.key || json?.k;
+    if (!id && !gotUrl) throw new Error('서버 응답에 id/url 없음');
+    return gotUrl || `${location.origin}/share.html?r=${encodeURIComponent(id)}`;
   }
 
   // 분석 실행
@@ -278,7 +307,6 @@
       renderHighlights(data); renderPersons(data.personA,data.personB);
       hiSec.style.display=''; personsSec.style.display=''; stop(); finishProgress();
 
-      // 하단 공유 버튼 활성화
       shareBtn.disabled=false;
       shareBtn.onclick=async()=>{
         try{
@@ -287,7 +315,10 @@
           await navigator.clipboard.writeText(url);
           shareBtn.textContent='✅ 링크 복사됨';
           setTimeout(()=>{shareBtn.textContent='🗂️ 공유 링크 복사'; shareBtn.disabled=false;},1500);
-        }catch(e){ alert('링크 생성 실패: '+(e?.message||e)); shareBtn.textContent='🗂️ 공유 링크 복사'; shareBtn.disabled=false; }
+        }catch(e){
+          alert('링크 생성 실패: '+(e?.message||e));
+          shareBtn.textContent='🗂️ 공유 링크 복사'; shareBtn.disabled=false;
+        }
       };
     }catch(e){
       stop(); finishProgress();
