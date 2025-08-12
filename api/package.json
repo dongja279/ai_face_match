@@ -1,5 +1,7 @@
 {
+  "type": "module",
   "dependencies": {
-    "@vercel/kv": "^0.2.3"
+    "@vercel/kv": "latest",
+    "nanoid": "latest"
   }
 }
