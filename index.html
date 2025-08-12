@@ -40,7 +40,7 @@
   .grid{display:grid;gap:16px}
   @media(min-width:960px){ .grid{grid-template-columns:1fr 1fr} }
 
-  /* 업로더 (파일 input은 offscreen으로 숨김: display:none 금지) */
+  /* 업로더: input은 offscreen(표준 접근), display:none 사용 X */
   .slot{position:relative;border:1px dashed #5c6b85;background:#0b1424;border-radius:16px;padding:10px}
   .slot .preview{
     display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;
@@ -49,13 +49,12 @@
   .choose{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
     padding:12px 18px;border-radius:12px;border:1px solid #ffffff28;
     background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:900;cursor:pointer}
-  /* 시각적으로 숨김(브라우저 접근 허용) */
   .file-ghost{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 
   /* 진행률 */
   .meter{height:10px;border-radius:999px;background:#0d1628;border:1px solid #182a48;overflow:hidden}
   .meter>div{height:100%;width:0%;background:linear-gradient(90deg,var(--accent2),var(--accent))}
-  .status{margin-top:8px;font-weight:900;color:#000} /* 요구: 블랙 */
+  .status{margin-top:8px;font-weight:900;color:#000} /* 요청: 블랙 */
 
   .actions{display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap}
   .btn{border:none;border-radius:14px;padding:14px 18px;font-weight:900;cursor:pointer;transition:.2s}
@@ -63,10 +62,11 @@
   .btn.secondary{background:#123; border:1px solid #2a3b5b;color:#dfe7fb;min-width:240px}
   .btn:disabled{opacity:.5;cursor:not-allowed}
 
-  /* 섹션 타이틀(요구: 블랙) */
+  /* 섹션 타이틀(요청: 블랙) */
   h2.section-title{margin:0 0 10px;font-size:20px;font-weight:900;color:#000}
 
-  .card{background:var(--panel-dark);border:1px solid #22324f;border-radius:16px;padding:14px;margin-top:12px;color:#eaf2ff;opacity:0;transform:translateY(8px);animation:fadeIn .35s ease-out forwards}
+  .card{background:var(--panel-dark);border:1px solid #22324f;border-radius:16px;padding:14px;margin-top:12px;color:#eaf2ff;
+    opacity:0; transform:translateY(8px); animation:fadeIn .35s ease-out forwards}
   .list{margin:6px 0 0 0;padding:0 0 0 18px}
   .list li{margin:6px 0}
   .row{display:flex;gap:12px;align-items:center;margin-bottom:6px}
@@ -105,18 +105,18 @@
 </header>
 
 <main class="wrap">
-  <!-- 업로드 (요청: "사진 업로드" 텍스트 제거) -->
+  <!-- 업로드 (요청: 카메라 제거, 갤러리/파일 선택만) -->
   <section class="panel">
     <div class="grid">
       <div class="slot">
         <img id="prevA" class="preview" alt="" />
-        <!-- offscreen: display:none 쓰지 않음 -->
-        <input id="fileA" type="file" accept="image/*" capture="environment" class="file-ghost" />
+        <!-- capture 제거: 갤러리/파일 선택 시트가 뜸 -->
+        <input id="fileA" type="file" accept="image/*" class="file-ghost" />
         <label for="fileA" class="choose" role="button">A 사진 업로드</label>
       </div>
       <div class="slot">
         <img id="prevB" class="preview" alt="" />
-        <input id="fileB" type="file" accept="image/*" capture="environment" class="file-ghost" />
+        <input id="fileB" type="file" accept="image/*" class="file-ghost" />
         <label for="fileB" class="choose" role="button">B 사진 업로드</label>
       </div>
     </div>
@@ -131,7 +131,7 @@
     </div>
   </section>
 
-  <!-- 하이라이트 (요청: 섹션 타이틀 블랙) -->
+  <!-- 하이라이트 -->
   <section id="hi" class="panel" style="margin-top:16px;display:none">
     <h2 class="section-title">결과 하이라이트</h2>
 
@@ -188,7 +188,7 @@
     </div>
   </section>
 
-  <footer>© 2025 AI 관상궁합 · 문의: <a href="mailto:dongja279@gmail.com">dongja279@gmail.com</a></footer>
+  <footer>문의: <a href="mailto:dongja279@gmail.com">dongja279@gmail.com</a></footer>
 </main>
 
 <script>
@@ -205,21 +205,51 @@
   const bizStrengths=document.getElementById('bizStrengths'), bizCautions=document.getElementById('bizCautions');
   const aFortunes=document.getElementById('aFortunes'), bFortunes=document.getElementById('bFortunes');
 
+  /* ---------- 큰 사진 리사이즈 & 압축 ---------- */
+  async function fileToCompressedDataURL(file, maxDim=1200, quality=0.85){
+    const img = new Image();
+    const blobUrl = URL.createObjectURL(file);
+    try{
+      await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=blobUrl; });
+      const {width:ow, height:oh} = img;
+      let w=ow, h=oh;
+      if(Math.max(ow,oh) > maxDim){
+        if(ow>oh){ w = maxDim; h = Math.round(oh*maxDim/ow); }
+        else{ h = maxDim; w = Math.round(ow*maxDim/oh); }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width=w; canvas.height=h;
+      const ctx = canvas.getContext('2d',{alpha:false});
+      ctx.drawImage(img,0,0,w,h);
+      const blob = await new Promise(res=>canvas.toBlob(b=>res(b),'image/jpeg',quality));
+      return await new Promise((res)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(blob); });
+    } finally {
+      URL.revokeObjectURL(blobUrl);
+    }
+  }
+
   /* ---------- 파일 로딩 ---------- */
-  const readAsDataURL = f => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); });
   let imgA=null,imgB=null;
-  fileA.onchange=async e=>{const f=e.target.files?.[0]; if(!f) return; imgA=await readAsDataURL(f); prevA.src=imgA;}
-  fileB.onchange=async e=>{const f=e.target.files?.[0]; if(!f) return; imgB=await readAsDataURL(f); prevB.src=imgB;}
+  fileA.onchange=async e=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    imgA = await fileToCompressedDataURL(f); // 압축본
+    prevA.src = imgA;
+  };
+  fileB.onchange=async e=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    imgB = await fileToCompressedDataURL(f);
+    prevB.src = imgB;
+  };
 
   /* ---------- 진행률 ---------- */
   function startProgress(){
     shareBtn.disabled=true; hiSec.style.display='none'; personsSec.style.display='none';
-    statusEl.textContent='대기 중…'; bar.style.width='0%';
+    statusEl.textContent='대기 중…'; bar.style.width='0%'; statusEl.style.color='#000';
     let p=0; statusEl.textContent='0% 분석 중…';
     const t=setInterval(()=>{ p+=Math.floor(Math.random()*12)+8; if(p>=96)p=96; bar.style.width=p+'%'; statusEl.textContent=p+'% 분석 중…'; },450);
     return ()=>clearInterval(t);
   }
-  function finishProgress(){ bar.style.width='100%'; statusEl.textContent='분석 완료!'; }
+  function finishProgress(){ bar.style.width='100%'; statusEl.textContent='분석 완료!'; statusEl.style.color='#000'; }
 
   /* ---------- 렌더 유틸 ---------- */
   const li = s => `<li>${String(s||'')}</li>`;
@@ -246,26 +276,21 @@
 
   /* ---------- 공유 링크 생성 & 공유 ---------- */
   async function createShareLink(payload){
-    const r=await fetch('/api/share',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:payload})});
-    const j=await r.json(); if(!r.ok) throw new Error(j?.error||'공유 링크 생성 실패'); return j.url;
+    // 이미지 제거(용량 방지)
+    const safe = JSON.parse(JSON.stringify(payload)); delete safe.imgA; delete safe.imgB;
+    const r=await fetch('/api/share',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:safe})});
+    const j=await r.json().catch(()=> ({}));
+    if(!r.ok||!j?.url) throw new Error(j?.error||'공유 링크 생성 실패');
+    return j.url;
   }
-  async function shareResult(data){
-    // 1) 서버에 저장 후 URL 확보
-    const url = await createShareLink(data);
+  async function openShare(url){
     const title='AI 관상궁합 결과';
     const text='우리 궁합 결과를 확인해보세요! ✨';
-
-    // 2) Web Share(API) → 폴백(클립보드)
-    if (navigator.share){
-      try{ await navigator.share({title,text,url}); return; }
-      catch(e){ /* 사용자가 취소해도 그냥 폴백 없이 종료 */ return; }
+    if(navigator.share){
+      try{ await navigator.share({title,text,url}); return; }catch(e){ /* 사용자가 취소할 수 있음 */ }
     }
-    try{
-      await navigator.clipboard.writeText(`${title}\n${text}\n${url}`);
-      alert('링크를 클립보드에 복사했어요!');
-    }catch(e){
-      alert('공유에 실패했습니다: '+ (e?.message || e));
-    }
+    try{ await navigator.clipboard.writeText(`${title}\n${text}\n${url}`); alert('링크가 클립보드에 복사되었어요!'); }
+    catch(e){ prompt('복사해서 공유하세요:', url); }
   }
 
   /* ---------- 분석 ---------- */
@@ -274,18 +299,25 @@
     const stop=startProgress(); analyzeBtn.disabled=true;
     try{
       const res=await fetch('/api/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imgA,imgB})});
-      // JSON 파싱 실패 대비
+      // 서버가 텍스트 에러를 줄 수도 있어 방어적으로 처리
       const text=await res.text();
-      let data; try{ data=JSON.parse(text);}catch{ throw new Error(text?.slice(0,120)||'Invalid JSON'); }
+      let data; try{ data=JSON.parse(text);}catch{ throw new Error(text?.slice(0,200)||'서버 응답 오류'); }
       if(!res.ok) throw new Error(data?.error||'분석 실패');
 
-      // 렌더
       renderHighlights(data); renderPersons(data.personA,data.personB);
       hiSec.style.display=''; personsSec.style.display=''; stop(); finishProgress();
 
-      // 공유 버튼 활성화
+      // 공유 버튼
       shareBtn.disabled=false;
-      shareBtn.onclick=()=>shareResult(data);
+      shareBtn.onclick=async()=>{
+        try{
+          shareBtn.disabled=true; shareBtn.textContent='링크 생성 중…';
+          const url=await createShareLink(data);
+          shareBtn.textContent='공유하기…';
+          await openShare(url);
+          shareBtn.textContent='📤 결과 공유하기'; shareBtn.disabled=false;
+        }catch(e){ alert('공유에 실패했습니다: '+(e?.message||e)); shareBtn.textContent='📤 결과 공유하기'; shareBtn.disabled=false; }
+      };
 
     }catch(e){ stop(); finishProgress(); alert('분석 중 오류가 발생했습니다.\n'+(e?.message||e)); }
     finally{ analyzeBtn.disabled=false; }
