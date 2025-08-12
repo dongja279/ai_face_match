@@ -20,33 +20,50 @@
   }
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--ink);
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    text-rendering:optimizeLegibility;
     font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,Helvetica,Arial}
   .wrap{max-width:1040px;margin:0 auto;padding:16px}
 
-  header{position:sticky;top:0;z-index:5;background:linear-gradient(90deg,#0b1323,#081024);
+  header{position:sticky;top:0;z-index:5;
+    background:linear-gradient(90deg,#0b1323,#081024);
     border-bottom:1px solid #ffffff22;box-shadow:0 6px 18px #0006}
   .brand{display:flex;gap:12px;align-items:center;padding:14px 8px}
   .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--accent2),var(--accent));box-shadow:0 6px 18px #0008}
   .brand h1{margin:0;font-size:22px;font-weight:900;letter-spacing:.2px;color:#fff}
   .brand p{margin:2px 0 0;color:#e8f2ff;font-weight:700}
 
-  .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:16px;padding:16px}
-  h2.section-title{margin:0 0 10px;font-size:20px;font-weight:900;color:#000} /* 검정색 고정 */
-
+  .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:16px;padding:16px}
   .card{background:#0e1728;border:1px solid #22324f;border-radius:16px;padding:14px;margin-top:12px;color:#eaf2ff}
-  .row{display:flex;gap:12px;align-items:center;margin-bottom:6px}
-  .scoreBadge{min-width:64px;height:64px;border-radius:50%;
-    background:radial-gradient(70% 70% at 30% 30%,#a78bfa 0%,#60a5fa 60%,#22d3ee 100%);
-    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:22px;box-shadow:0 6px 18px #0008;margin-right:12px}
-  .mini{background:#0d1426;border:1px solid #1e2d4a;border-radius:14px;padding:12px;margin-top:12px}
-  .mini h4{margin:0 0 8px;font-size:15px;font-weight:900;color:#fff}
   .list{margin:6px 0 0 0;padding:0 0 0 18px}
+  .list li{margin:6px 0}
+  .row{display:flex;gap:12px;align-items:center;margin-bottom:6px}
   .pill{display:inline-block;border-radius:999px;border:1px solid #2a3a5c;background:#0f1a31;padding:6px 10px;color:#dfe7fb;font-weight:800}
-  .dim{color:#e9f2ff}
-  .error{background:#2b1520;border:1px solid #8b314a;color:#ffdce1;padding:12px;border-radius:12px;font-weight:800}
+
+  .scoreBadge{min-width:72px;height:72px;border-radius:50%;
+    background:radial-gradient(70% 70% at 30% 30%,#a78bfa 0%,#60a5fa 60%,#22d3ee 100%);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:900;font-size:26px;box-shadow:0 8px 22px #0008;margin-right:12px}
+
+  .mini{background:#0d1426;border:1px solid #1e2d4a;border-radius:14px;padding:12px;margin-top:12px}
+  .mini h4{margin:0 0 8px;font-size:16px;font-weight:900;color:#fff}
+  .mini .reason,.mini .verdict{font-weight:800}
+  .mini .tips{margin:8px 0 0 16px}
+
+  /* 모바일에서 제목 가독성 강화: 진한 블랙, 약간의 텍스트 그림자 */
+  h2.section-title{
+    margin:0 0 10px;font-size:22px;font-weight:900;color:#000 !important;
+    text-shadow:0 1px 0 rgba(255,255,255,.25);
+  }
+
+  .fade-in{opacity:0;transform:translateY(8px);animation:fadein .55s ease-out forwards}
+  @keyframes fadein{to{opacity:1;transform:none}}
 
   footer{margin:20px 0;color:#cfe1ff;text-align:center}
   footer a{color:#fff;font-weight:800}
+
+  .error{background:#2b0e14;color:#ffd7db;border:1px solid #5d1b27;padding:14px;border-radius:12px;font-weight:800}
 </style>
 </head>
 <body>
@@ -60,23 +77,24 @@
   </div>
 </header>
 
-<main class="wrap" id="root">
-  <section class="panel" id="errBox" style="display:none">
+<main class="wrap" id="app">
+  <section id="errorBox" class="panel" style="display:none">
     <div class="error" id="errMsg">결과를 찾을 수 없습니다.</div>
   </section>
 
-  <section id="hi" class="panel" style="margin-top:16px;display:none">
+  <!-- 하이라이트 -->
+  <section id="hi" class="panel fade-in" style="display:none;margin-top:16px">
     <h2 class="section-title">결과 하이라이트</h2>
 
-    <div id="loveCard" class="card" style="display:none">
+    <div id="loveCard" class="card">
       <div class="row">
         <div class="scoreBadge" id="loveScore">–</div>
         <div>
           <div style="font-weight:900">💖 연애/우정 궁합</div>
-          <div id="loveSummary" class="dim">—</div>
+          <div id="loveSummary" style="opacity:.85">—</div>
         </div>
       </div>
-      <div class="mini" id="loveMini" style="display:none">
+      <div class="mini">
         <h4>잘 맞는 점</h4>
         <ul id="loveStrengths" class="list"></ul>
         <h4 style="margin-top:10px">조심해야 할 점</h4>
@@ -84,15 +102,15 @@
       </div>
     </div>
 
-    <div id="bizCard" class="card" style="display:none">
+    <div id="bizCard" class="card">
       <div class="row">
         <div class="scoreBadge" id="bizScore">–</div>
         <div>
           <div style="font-weight:900">💼 비즈니스 궁합</div>
-          <div id="bizSummary" class="dim">—</div>
+          <div id="bizSummary" style="opacity:.85">—</div>
         </div>
       </div>
-      <div class="mini" id="bizMini" style="display:none">
+      <div class="mini">
         <h4>잘 맞는 점</h4>
         <ul id="bizStrengths" class="list"></ul>
         <h4 style="margin-top:10px">조심해야 할 점</h4>
@@ -101,16 +119,17 @@
     </div>
   </section>
 
-  <section id="persons" class="panel" style="margin-top:16px;display:none">
+  <!-- 개인별 -->
+  <section id="persons" class="panel fade-in" style="display:none;margin-top:16px">
     <h2 class="section-title">👤 개인별 관상 특징 & 운세</h2>
 
-    <div id="personA" class="card" style="display:none">
-      <div class="row"><span class="pill">A</span><span class="dim">관상 기반 운세</span></div>
+    <div id="personA" class="card">
+      <div class="row"><span class="pill">A</span><span style="opacity:.85">관상 기반 운세</span></div>
       <div id="aFortunes"></div>
     </div>
 
-    <div id="personB" class="card" style="display:none">
-      <div class="row"><span class="pill">B</span><span class="dim">관상 기반 운세</span></div>
+    <div id="personB" class="card">
+      <div class="row"><span class="pill">B</span><span style="opacity:.85">관상 기반 운세</span></div>
       <div id="bFortunes"></div>
     </div>
   </section>
@@ -119,96 +138,75 @@
 </main>
 
 <script>
-  // ===== 렌더 유틸 =====
   const $ = (id)=>document.getElementById(id);
-  const hiSec=$('hi'), personsSec=$('persons');
-  const loveCard=$('loveCard'), loveScore=$('loveScore'), loveSummary=$('loveSummary');
-  const loveStrengths=$('loveStrengths'), loveCautions=$('loveCautions'), loveMini=$('loveMini');
-  const bizCard=$('bizCard'), bizScore=$('bizScore'), bizSummary=$('bizSummary');
-  const bizStrengths=$('bizStrengths'), bizCautions=$('bizCautions'), bizMini=$('bizMini');
+  const hiSec = $('hi'), personsSec = $('persons'), errorBox=$('errorBox'), errMsg=$('errMsg');
+
+  const loveScore=$('loveScore'), loveSummary=$('loveSummary');
+  const loveStrengths=$('loveStrengths'), loveCautions=$('loveCautions');
+  const bizScore=$('bizScore'), bizSummary=$('bizSummary');
+  const bizStrengths=$('bizStrengths'), bizCautions=$('bizCautions');
   const aFortunes=$('aFortunes'), bFortunes=$('bFortunes');
-  const personA=$('personA'), personB=$('personB');
-  const errBox=$('errBox'), errMsg=$('errMsg');
 
   const li = s => `<li>${String(s||'')}</li>`;
-  const listHtml = a => (a||[]).filter(Boolean).map(li).join('');
-
+  const listHtml = a => (a||[]).map(li).join('');
   function mini(title,obj){
-    if(!obj) return '';
-    const reason = obj.reason ? `<div class="reason"><b>근거:</b> ${String(obj.reason)}</div>` : '';
-    const verdict = obj.verdict ? `<div class="verdict"><b>결론:</b> ${String(obj.verdict)}</div>` : '';
-    const tips = (obj.tips && obj.tips.length) ? `<ul class="list">${listHtml(obj.tips)}</ul>` : '';
-    if(!(reason||verdict||tips)) return '';
-    return `<div class="mini"><h4>${title}</h4>${reason}${verdict}${tips}</div>`;
+    return `<div class="mini">
+      <h4>${title}</h4>
+      <div class="reason"><b>근거:</b> ${String(obj?.reason||'')}</div>
+      <div class="verdict"><b>결론:</b> ${String(obj?.verdict||'')}</div>
+      ${(obj?.tips?.length? `<ul class="tips">${listHtml(obj.tips)}</ul>`:'')}
+    </div>`;
   }
-
+  function renderPersons(pA,pB){
+    aFortunes.innerHTML= mini('💰 재물운',pA?.wealth)+mini('💖 연애운',pA?.love)+mini('💪 건강운',pA?.health);
+    bFortunes.innerHTML= mini('💰 재물운',pB?.wealth)+mini('💖 연애운',pB?.love)+mini('💪 건강운',pB?.health);
+  }
   function renderHighlights(d){
     const L=d?.compatibility?.love_friendship||{}, B=d?.compatibility?.business||{};
-    const hasLove = (L.score!=null) || L.summary || (L.strengths?.length) || (L.cautions?.length);
-    const hasBiz  = (B.score!=null) || B.summary || (B.strengths?.length) || (B.cautions?.length);
-
-    if(hasLove){
-      loveCard.style.display='';
-      loveScore.textContent=(L.score ?? '–');
-      loveSummary.textContent=L.summary || '—';
-      const s1=listHtml(L.strengths), s2=listHtml(L.cautions);
-      loveMini.style.display = (s1||s2) ? '' : 'none';
-      loveStrengths.innerHTML=s1; loveCautions.innerHTML=s2;
-    }else loveCard.style.display='none';
-
-    if(hasBiz){
-      bizCard.style.display='';
-      bizScore.textContent=(B.score ?? '–');
-      bizSummary.textContent=B.summary || '—';
-      const b1=listHtml(B.strengths), b2=listHtml(B.cautions);
-      bizMini.style.display = (b1||b2) ? '' : 'none';
-      bizStrengths.innerHTML=b1; bizCautions.innerHTML=b2;
-    }else bizCard.style.display='none';
-
-    hiSec.style.display = (hasLove||hasBiz) ? '' : 'none';
+    loveScore.textContent=(L.score??'–'); loveSummary.textContent=L.summary||'—';
+    loveStrengths.innerHTML=listHtml(L.strengths); loveCautions.innerHTML=listHtml(L.cautions);
+    bizScore.textContent=(B.score??'–'); bizSummary.textContent=B.summary||'—';
+    bizStrengths.innerHTML=listHtml(B.strengths); bizCautions.innerHTML=listHtml(B.cautions);
   }
 
-  function renderPersons(pA,pB){
-    const htmlA=[ mini('💰 재물운',pA?.wealth), mini('💖 연애운',pA?.love), mini('💪 건강운',pA?.health) ].filter(Boolean).join('');
-    const htmlB=[ mini('💰 재물운',pB?.wealth), mini('💖 연애운',pB?.love), mini('💪 건강운',pB?.health) ].filter(Boolean).join('');
-    personA.style.display = htmlA ? '' : 'none';
-    personB.style.display = htmlB ? '' : 'none';
-    aFortunes.innerHTML=htmlA; bFortunes.innerHTML=htmlB;
-    personsSec.style.display = (htmlA||htmlB) ? '' : 'none';
+  function getParam(name){
+    const m = new URL(location.href).searchParams.get(name);
+    return m ? decodeURIComponent(m) : '';
   }
 
-  function showError(msg='결과를 찾을 수 없습니다.'){
-    errMsg.textContent=msg; errBox.style.display='';
-    hiSec.style.display='none'; personsSec.style.display='none';
-  }
-
-  // ===== 데이터 로드 =====
-  (async function(){
-    const sp = new URLSearchParams(location.search);
-    const id = sp.get('r') || sp.get('id');
-    if(!id){ showError('유효하지 않은 링크입니다.'); return; }
+  async function loadAndRender(){
+    const id = getParam('r');
+    if(!id){ errorBox.style.display=''; errMsg.textContent='결과를 찾을 수 없습니다.'; return; }
 
     try{
-      const res = await fetch(`/api/get?id=${encodeURIComponent(id)}`, {cache:'no-store'});
-      const j = await res.json();
-      if(!res.ok) throw new Error(j?.error||'조회 실패');
+      const r = await fetch(`/api/load?id=${encodeURIComponent(id)}`);
+      const j = await r.json();
 
-      // 서버가 {ok:true, data:object} 형식일 것으로 가정
-      let data = j.data ?? j.value ?? j.result;
-      if(typeof data === 'string'){ try{ data = JSON.parse(data); }catch{} }
+      if(!r.ok || !j?.ok || !j?.data){
+        errorBox.style.display=''; errMsg.textContent=j?.error || '결과를 찾을 수 없습니다.'; return;
+      }
 
-      if(!data){ showError('결과를 찾을 수 없습니다.'); return; }
+      let data = j.data;
+
+      // 혹시라도 이중 래핑이 남아있으면 최종 방어
+      if (data && typeof data === 'object' && 'value' in data) {
+        try { data = JSON.parse(data.value); } catch {}
+      }
 
       renderHighlights(data);
       renderPersons(data.personA, data.personB);
-      // 결과가 전혀 없으면 에러 표시
-      if(hiSec.style.display==='none' && personsSec.style.display==='none'){
-        showError('결과를 찾을 수 없습니다.');
-      }
+
+      errorBox.style.display='none';
+      hiSec.style.display=''; personsSec.style.display='';
     }catch(e){
-      showError(e?.message || '조회 중 오류가 발생했습니다.');
+      errorBox.style.display='';
+      errMsg.textContent='불러오는 중 오류가 발생했습니다.';
+      console.error(e);
     }
-  })();
+  }
+
+  // 시작
+  loadAndRender();
 </script>
 </body>
 </html>
