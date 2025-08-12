@@ -7,17 +7,19 @@
 <meta name="color-scheme" content="dark light" />
 <style>
   :root{
-    --bg:#0b1220; --panel:#0f172a; --panel2:#0d1628;
-    --ink:#ffffff; --muted:#cfe1ff; --sub:#e7efff;
-    --accent:#7c3aed; --accent2:#22d3ee; --line:#20314d;
+    --bg:#eef3fb; --panel:#ffffff; --panel2:#ffffff;
+    --ink:#0b1320; --muted:#344055; --sub:#0b1320;
+    --accent:#6d28d9; --accent2:#06b6d4; --line:#e7edf5;
+    --panel-dark:#0e1628; --panel-dark2:#0b1424;
   }
-  @media (prefers-color-scheme: light){
+  @media (prefers-color-scheme: dark){
     :root{
-      --bg:#f6f8fc; --panel:#ffffff; --panel2:#ffffff;
-      --ink:#0b1320; --muted:#24324a; --sub:#1b2740; --line:#e7edf5;
-      --accent:#6d28d9; --accent2:#0891b2;
+      --bg:#0b1220; --panel:#0f172a; --panel2:#0d1628;
+      --ink:#ffffff; --muted:#cfe1ff; --sub:#ffffff; --line:#20314d;
+      --accent:#7c3aed; --accent2:#22d3ee;
     }
   }
+
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,Helvetica,Arial}
@@ -32,26 +34,28 @@
   .brand h1{margin:0;font-size:22px;font-weight:900;letter-spacing:.2px;color:#fff}
   .brand p{margin:2px 0 0;color:#e8f2ff;font-weight:700}
 
+  /* 카드/레이아웃 */
   .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));
     border:1px solid var(--line);border-radius:16px;padding:16px}
   .grid{display:grid;gap:16px}
   @media(min-width:960px){ .grid{grid-template-columns:1fr 1fr} }
 
-  /* 업로더 */
+  /* 업로더 (파일 input은 offscreen으로 숨김: display:none 금지) */
   .slot{position:relative;border:1px dashed #5c6b85;background:#0b1424;border-radius:16px;padding:10px}
   .slot .preview{
     display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;
     border:1px solid #1e2a40;background:#0b1424;
   }
-  .slot .preview:not([src]), .slot .preview[src=""]{opacity:1}
-  .slot .choose{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
+  .choose{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
     padding:12px 18px;border-radius:12px;border:1px solid #ffffff28;
     background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:900;cursor:pointer}
-  input[type=file]{display:none}
+  /* 시각적으로 숨김(브라우저 접근 허용) */
+  .file-ghost{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 
+  /* 진행률 */
   .meter{height:10px;border-radius:999px;background:#0d1628;border:1px solid #182a48;overflow:hidden}
   .meter>div{height:100%;width:0%;background:linear-gradient(90deg,var(--accent2),var(--accent))}
-  .status{margin-top:8px;color:#000;font-weight:900} /* 요청: 검정색 */
+  .status{margin-top:8px;font-weight:900;color:#000} /* 요구: 블랙 */
 
   .actions{display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap}
   .btn{border:none;border-radius:14px;padding:14px 18px;font-weight:900;cursor:pointer;transition:.2s}
@@ -59,13 +63,10 @@
   .btn.secondary{background:#123; border:1px solid #2a3b5b;color:#dfe7fb;min-width:240px}
   .btn:disabled{opacity:.5;cursor:not-allowed}
 
-  /* 섹션 타이틀: 요청대로 검정색 */
+  /* 섹션 타이틀(요구: 블랙) */
   h2.section-title{margin:0 0 10px;font-size:20px;font-weight:900;color:#000}
 
-  .card{background:#0e1728;border:1px solid #22324f;border-radius:16px;padding:14px;margin-top:12px;color:#eaf2ff;
-    opacity:0; transform:translateY(8px); animation:cardIn .5s ease forwards}
-  @keyframes cardIn{to{opacity:1;transform:none}}
-
+  .card{background:var(--panel-dark);border:1px solid #22324f;border-radius:16px;padding:14px;margin-top:12px;color:#eaf2ff;opacity:0;transform:translateY(8px);animation:fadeIn .35s ease-out forwards}
   .list{margin:6px 0 0 0;padding:0 0 0 18px}
   .list li{margin:6px 0}
   .row{display:flex;gap:12px;align-items:center;margin-bottom:6px}
@@ -82,8 +83,14 @@
   .mini .tips{margin:8px 0 0 16px}
   .dim{color:#e9f2ff}
 
+  /* 하단 공유영역 */
+  .shareBar{margin:18px 0 0;display:flex;justify-content:center}
+  .shareBtn{border:none;border-radius:14px;padding:14px 18px;font-weight:900;cursor:pointer;min-width:240px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+
   footer{margin:20px 0;color:#cfe1ff;text-align:center}
   footer a{color:#fff;font-weight:800}
+
+  @keyframes fadeIn{to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
@@ -98,18 +105,19 @@
 </header>
 
 <main class="wrap">
-  <!-- 업로드: 요청에 따라 큰 제목 '사진 업로드' 제거 -->
+  <!-- 업로드 (요청: "사진 업로드" 텍스트 제거) -->
   <section class="panel">
     <div class="grid">
       <div class="slot">
         <img id="prevA" class="preview" alt="" />
-        <input id="fileA" type="file" accept="image/*" />
-        <button id="pickA" class="choose">A 사진 업로드</button>
+        <!-- offscreen: display:none 쓰지 않음 -->
+        <input id="fileA" type="file" accept="image/*" capture="environment" class="file-ghost" />
+        <label for="fileA" class="choose" role="button">A 사진 업로드</label>
       </div>
       <div class="slot">
         <img id="prevB" class="preview" alt="" />
-        <input id="fileB" type="file" accept="image/*" />
-        <button id="pickB" class="choose">B 사진 업로드</button>
+        <input id="fileB" type="file" accept="image/*" capture="environment" class="file-ghost" />
+        <label for="fileB" class="choose" role="button">B 사진 업로드</label>
       </div>
     </div>
 
@@ -123,7 +131,7 @@
     </div>
   </section>
 
-  <!-- 하이라이트 -->
+  <!-- 하이라이트 (요청: 섹션 타이틀 블랙) -->
   <section id="hi" class="panel" style="margin-top:16px;display:none">
     <h2 class="section-title">결과 하이라이트</h2>
 
@@ -173,12 +181,10 @@
       <div class="row"><span class="pill">B</span><span class="dim">관상 기반 운세</span></div>
       <div id="bFortunes"></div>
     </div>
-  </section>
 
-  <!-- 공유 버튼: 결과 하단 -->
-  <section class="panel" id="sharePanel" style="display:none;margin-top:16px">
-    <div class="actions">
-      <button id="shareBtn" class="btn secondary" disabled>🔗 결과 공유하기</button>
+    <!-- 하단 공유 버튼 (결과 읽고 공유) -->
+    <div class="shareBar">
+      <button id="shareBtn" class="shareBtn" disabled>📤 결과 공유하기</button>
     </div>
   </section>
 
@@ -186,13 +192,12 @@
 </main>
 
 <script>
-  /* ---------- 요소 참조 ---------- */
-  const pickA=document.getElementById('pickA'), pickB=document.getElementById('pickB');
+  /* ---------- 엘리먼트 ---------- */
   const fileA=document.getElementById('fileA'), fileB=document.getElementById('fileB');
   const prevA=document.getElementById('prevA'), prevB=document.getElementById('prevB');
   const analyzeBtn=document.getElementById('analyze'), shareBtn=document.getElementById('shareBtn');
   const bar=document.getElementById('bar'), statusEl=document.getElementById('status');
-  const hiSec=document.getElementById('hi'), personsSec=document.getElementById('persons'), sharePanel=document.getElementById('sharePanel');
+  const hiSec=document.getElementById('hi'), personsSec=document.getElementById('persons');
 
   const loveScore=document.getElementById('loveScore'), loveSummary=document.getElementById('loveSummary');
   const loveStrengths=document.getElementById('loveStrengths'), loveCautions=document.getElementById('loveCautions');
@@ -200,67 +205,27 @@
   const bizStrengths=document.getElementById('bizStrengths'), bizCautions=document.getElementById('bizCautions');
   const aFortunes=document.getElementById('aFortunes'), bFortunes=document.getElementById('bFortunes');
 
-  pickA.onclick=()=>fileA.click(); pickB.onclick=()=>fileB.click();
-
-  /* ---------- 이미지 리사이즈 & 압축 ---------- */
-  async function fileToCompressedDataURL(file, maxDim=1200, quality=0.85){
-    const img = new Image();
-    const blobUrl = URL.createObjectURL(file);
-    try{
-      await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=blobUrl; });
-      const {width:ow, height:oh} = img;
-      let w=ow, h=oh;
-      if(Math.max(ow,oh) > maxDim){
-        if(ow>oh){ w = maxDim; h = Math.round(oh*maxDim/ow); }
-        else{ h = maxDim; w = Math.round(ow*maxDim/oh); }
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width=w; canvas.height=h;
-      const ctx = canvas.getContext('2d',{alpha:false});
-      ctx.drawImage(img,0,0,w,h);
-      return await new Promise(res=>canvas.toBlob(b=>{
-        res(URL.createObjectURL(b));
-      }, 'image/jpeg', quality));
-    } finally {
-      URL.revokeObjectURL(blobUrl);
-    }
-  }
-  async function blobUrlToDataURL(url){
-    const r = await fetch(url); const b = await r.blob();
-    return await new Promise((res)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.readAsDataURL(b); });
-  }
-
+  /* ---------- 파일 로딩 ---------- */
+  const readAsDataURL = f => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); });
   let imgA=null,imgB=null;
-  fileA.onchange=async e=>{
-    const f=e.target.files?.[0]; if(!f) return;
-    const compUrl = await fileToCompressedDataURL(f);
-    imgA = await blobUrlToDataURL(compUrl);
-    prevA.src = imgA;
-    URL.revokeObjectURL(compUrl);
-  };
-  fileB.onchange=async e=>{
-    const f=e.target.files?.[0]; if(!f) return;
-    const compUrl = await fileToCompressedDataURL(f);
-    imgB = await blobUrlToDataURL(compUrl);
-    prevB.src = imgB;
-    URL.revokeObjectURL(compUrl);
-  };
+  fileA.onchange=async e=>{const f=e.target.files?.[0]; if(!f) return; imgA=await readAsDataURL(f); prevA.src=imgA;}
+  fileB.onchange=async e=>{const f=e.target.files?.[0]; if(!f) return; imgB=await readAsDataURL(f); prevB.src=imgB;}
 
   /* ---------- 진행률 ---------- */
   function startProgress(){
-    shareBtn.disabled=true; sharePanel.style.display='none';
-    hiSec.style.display='none'; personsSec.style.display='none';
-    statusEl.textContent='분석 준비 중…'; bar.style.width='0%'; statusEl.style.color='#000';
-    let p=0; const t=setInterval(()=>{ p+=Math.floor(Math.random()*12)+8; if(p>=96)p=96; bar.style.width=p+'%'; statusEl.textContent=p+'% 분석 중…'; },450);
+    shareBtn.disabled=true; hiSec.style.display='none'; personsSec.style.display='none';
+    statusEl.textContent='대기 중…'; bar.style.width='0%';
+    let p=0; statusEl.textContent='0% 분석 중…';
+    const t=setInterval(()=>{ p+=Math.floor(Math.random()*12)+8; if(p>=96)p=96; bar.style.width=p+'%'; statusEl.textContent=p+'% 분석 중…'; },450);
     return ()=>clearInterval(t);
   }
-  function finishProgress(){ bar.style.width='100%'; statusEl.textContent='분석 완료!'; statusEl.style.color='#000'; }
+  function finishProgress(){ bar.style.width='100%'; statusEl.textContent='분석 완료!'; }
 
   /* ---------- 렌더 유틸 ---------- */
   const li = s => `<li>${String(s||'')}</li>`;
   const listHtml = a => (a||[]).map(li).join('');
   function mini(title,obj){
-    return `<div class="mini" style="animation-delay:.06s">
+    return `<div class="mini">
       <h4>${title}</h4>
       <div class="reason"><b>근거:</b> ${String(obj?.reason||'')}</div>
       <div class="verdict"><b>결론:</b> ${String(obj?.verdict||'')}</div>
@@ -279,47 +244,48 @@
     bizStrengths.innerHTML=listHtml(B.strengths); bizCautions.innerHTML=listHtml(B.cautions);
   }
 
-  /* ---------- 공유 링크 생성 + 시스템 공유 시트 ---------- */
+  /* ---------- 공유 링크 생성 & 공유 ---------- */
   async function createShareLink(payload){
     const r=await fetch('/api/share',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:payload})});
-    const text=await r.text();
-    let data; try{ data=JSON.parse(text);}catch(e){ throw new Error(text || '공유 링크 생성 실패'); }
-    if(!r.ok) throw new Error(data?.error||'공유 링크 생성 실패');
-    return data.url;
+    const j=await r.json(); if(!r.ok) throw new Error(j?.error||'공유 링크 생성 실패'); return j.url;
   }
-  async function openShare(url){
+  async function shareResult(data){
+    // 1) 서버에 저장 후 URL 확보
+    const url = await createShareLink(data);
     const title='AI 관상궁합 결과';
     const text='우리 궁합 결과를 확인해보세요! ✨';
-    if(navigator.share){
-      try{ await navigator.share({title,text,url}); return; }catch(e){ /* 사용자가 취소할 수 있음 */ }
+
+    // 2) Web Share(API) → 폴백(클립보드)
+    if (navigator.share){
+      try{ await navigator.share({title,text,url}); return; }
+      catch(e){ /* 사용자가 취소해도 그냥 폴백 없이 종료 */ return; }
     }
-    try{ await navigator.clipboard.writeText(url); alert('링크가 클립보드에 복사되었어요!'); }
-    catch(e){ prompt('복사해서 공유하세요:', url); }
+    try{
+      await navigator.clipboard.writeText(`${title}\n${text}\n${url}`);
+      alert('링크를 클립보드에 복사했어요!');
+    }catch(e){
+      alert('공유에 실패했습니다: '+ (e?.message || e));
+    }
   }
 
-  /* ---------- 분석 버튼 ---------- */
+  /* ---------- 분석 ---------- */
   analyzeBtn.onclick=async ()=>{
     if(!imgA||!imgB){alert('A, B 사진을 모두 업로드해 주세요.');return;}
     const stop=startProgress(); analyzeBtn.disabled=true;
     try{
       const res=await fetch('/api/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imgA,imgB})});
-      const raw=await res.text();
-      let data; try{ data=JSON.parse(raw);}catch{ throw new Error(raw?.slice(0,200)||'서버 응답 오류'); }
+      // JSON 파싱 실패 대비
+      const text=await res.text();
+      let data; try{ data=JSON.parse(text);}catch{ throw new Error(text?.slice(0,120)||'Invalid JSON'); }
       if(!res.ok) throw new Error(data?.error||'분석 실패');
 
+      // 렌더
       renderHighlights(data); renderPersons(data.personA,data.personB);
       hiSec.style.display=''; personsSec.style.display=''; stop(); finishProgress();
 
-      sharePanel.style.display=''; shareBtn.disabled=false;
-      shareBtn.onclick=async()=>{
-        try{
-          shareBtn.disabled=true; shareBtn.textContent='링크 생성 중…';
-          const url=await createShareLink(data);
-          shareBtn.textContent='공유하기 열기…';
-          await openShare(url);
-          shareBtn.textContent='🔗 결과 공유하기'; shareBtn.disabled=false;
-        }catch(e){ alert('공유에 실패했습니다: '+(e?.message||e)); shareBtn.textContent='🔗 결과 공유하기'; shareBtn.disabled=false; }
-      };
+      // 공유 버튼 활성화
+      shareBtn.disabled=false;
+      shareBtn.onclick=()=>shareResult(data);
 
     }catch(e){ stop(); finishProgress(); alert('분석 중 오류가 발생했습니다.\n'+(e?.message||e)); }
     finally{ analyzeBtn.disabled=false; }
