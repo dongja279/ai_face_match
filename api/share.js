@@ -1,28 +1,77 @@
 // /api/share.js
-import { Redis } from '@upstash/redis';
-
-const redis = Redis.fromEnv(); // KV_URL / KV_REST_API_URL / KV_REST_API_TOKEN 사용
-
 export default async function handler(req, res) {
+  // 항상 JSON으로만 응답
+  const send = (code, obj) => {
+    res.status(code).setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(obj));
+  };
+
+  if (req.method !== 'POST') return send(405, { error: 'Method not allowed' });
+
   try {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+    // --- 환경변수 체크
+    const { KV_REST_API_URL, KV_REST_API_TOKEN } = process.env;
+    if (!KV_REST_API_URL || !KV_REST_API_TOKEN) {
+      return send(500, { error: 'Missing KV env vars (KV_REST_API_URL / KV_REST_API_TOKEN)' });
+    }
 
-    const { result, type = 'match' } = req.body || {};
-    if (!result) return res.status(400).json({ error: 'No result data provided' });
+    // --- body 파싱 (Vercel 환경 호환)
+    let bodyStr = '';
+    await new Promise((resolve, reject) => {
+      req.on('data', (c) => (bodyStr += c));
+      req.on('end', resolve);
+      req.on('error', reject);
+    });
 
-    // 8자리 키
-    const key = 's:' + Math.random().toString(36).slice(2, 10);
-    // 결과 객체 전체를 그대로 저장 (7일 만료)
-    await redis.set(key, { type, result }, { ex: 60 * 60 * 24 * 7 });
+    let payload;
+    try {
+      payload = JSON.parse(bodyStr);
+    } catch {
+      return send(400, { error: 'Invalid JSON body' });
+    }
 
-    // 현재 도메인 기준 공유 URL
-    const origin = req.headers['x-forwarded-host']
-      ? `https://${req.headers['x-forwarded-host']}`
-      : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
-    const url = `${origin}/?r=${encodeURIComponent(key)}`;
+    const data = payload?.data;
+    if (!data) return send(400, { error: 'No result data provided' });
 
-    return res.status(200).json({ ok: true, id: key, url });
+    // 이미지/불필요 대형 필드 방어(혹시 들어왔다면 제거)
+    delete data.imgA;
+    delete data.imgB;
+
+    const value = JSON.stringify(data);
+    const bytes = Buffer.byteLength(value, 'utf8');
+    if (bytes > 900_000) {
+      return send(413, { error: 'Payload too large for KV (limit ~1MB)' });
+    }
+
+    // key 생성 (8~12자 랜덤)
+    const id = Math.random().toString(36).slice(2, 10);
+    const key = `ai-face:${id}`;
+
+    // Upstash REST (POST JSON 방식)
+    const r = await fetch(`${KV_REST_API_URL}/set/${encodeURIComponent(key)}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${KV_REST_API_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ value, ex: 60 * 60 * 24 * 7 }), // 7일 보관
+    });
+
+    const text = await r.text();
+    if (!r.ok) {
+      let err = text;
+      try { err = JSON.parse(text)?.error || err; } catch {}
+      return send(500, { error: `KV set failed: ${err}` });
+    }
+
+    // 최종 공유 URL
+    const base = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`;
+    const url = `${base}/?r=${encodeURIComponent(id)}`;
+
+    return send(200, { ok: true, id, url });
   } catch (e) {
-    return res.status(500).json({ error: e?.message || 'Share error' });
+    return send(500, { error: e?.message || 'Unexpected server error' });
   }
 }
