@@ -1,20 +1,18 @@
 // /api/get.js
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+const redis = Redis.fromEnv();
 
 export default async function handler(req, res) {
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method Not Allowed' });
-
   try {
-    const { id } = req.query;
+    const id = (req.query.id || req.query.key || '').toString();
     if (!id) return res.status(400).json({ error: 'Missing id' });
 
-    const raw = await kv.get(`share:${id}`);
-    if (!raw) return res.status(404).json({ error: 'Not Found or expired' });
+    const data = await redis.get(id);
+    if (!data) return res.status(404).json({ error: 'Not found' });
 
-    const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    // data = { type, result }
     return res.status(200).json(data);
   } catch (e) {
-    console.error('Get API Error:', e);
-    return res.status(500).json({ error: 'Failed to fetch shared result' });
+    return res.status(500).json({ error: e?.message || 'Get error' });
   }
 }
