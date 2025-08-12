@@ -23,13 +23,13 @@
     font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,Helvetica,Arial}
   .wrap{max-width:1040px;margin:0 auto;padding:16px}
 
-  /* 헤더 대비 ↑ */
+  /* 헤더 */
   header{position:sticky;top:0;z-index:5;
     background:linear-gradient(90deg,#0b1323,#081024);
     border-bottom:1px solid #ffffff22;box-shadow:0 6px 18px #0006}
   .brand{display:flex;gap:12px;align-items:center;padding:14px 8px}
   .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--accent2),var(--accent));box-shadow:0 6px 18px #0008}
-  .brand h1{margin:0;font-size:22px;font-weight:900;letter-spacing:.2px;color:#fff}
+  .brand h1{margin:0;font-size:22px;font-weight:900;color:#fff}
   .brand p{margin:2px 0 0;color:#e8f2ff;font-weight:700}
 
   .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));
@@ -43,7 +43,7 @@
     display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;
     border:1px solid #1e2a40;background:#0b1424;
   }
-  /* alt 텍스트/깨진 이미지 아이콘 숨김 */
+  /* alt 숨김 */
   .slot .preview:not([src]), .slot .preview[src=""]{opacity:1}
   .slot .choose{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
     padding:12px 18px;border-radius:12px;border:1px solid #ffffff28;
@@ -100,7 +100,6 @@
     <h2 class="section-title">사진 업로드</h2>
     <div class="grid">
       <div class="slot">
-        <!-- 미리보기 텍스트/아이콘 제거: alt="" -->
         <img id="prevA" class="preview" alt="" />
         <input id="fileA" type="file" accept="image/*" />
         <button id="pickA" class="choose">A 사진 업로드</button>
@@ -232,8 +231,13 @@
     bizStrengths.innerHTML=listHtml(B.strengths); bizCautions.innerHTML=listHtml(B.cautions);
   }
 
+  // *** 공유 링크 API 호출: 서버가 요구하는 { result, type } 로 전송 ***
   async function createShareLink(payload){
-    const r=await fetch('/api/share',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:payload})});
+    const r=await fetch('/api/share',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ result: payload, type: 'match' })
+    });
     const j=await r.json(); if(!r.ok) throw new Error(j?.error||'공유 링크 생성 실패'); return j.url;
   }
 
@@ -251,11 +255,12 @@
       shareBtn.disabled=false;
       shareBtn.onclick=async()=>{
         try{
-          shareBtn.disabled=true; shareBtn.textContent='링크 생성 중…';
+          shareBtn.disabled=true; const prev=shareBtn.textContent;
+          shareBtn.textContent='링크 생성 중…';
           const url=await createShareLink(data);
           await navigator.clipboard.writeText(url);
           shareBtn.textContent='✅ 링크 복사됨';
-          setTimeout(()=>{shareBtn.textContent='🗂️ 공유 링크 복사'; shareBtn.disabled=false;},1500);
+          setTimeout(()=>{shareBtn.textContent=prev; shareBtn.disabled=false;},1500);
         }catch(e){ alert('링크 생성 실패: '+(e?.message||e)); shareBtn.textContent='🗂️ 공유 링크 복사'; shareBtn.disabled=false; }
       };
 
