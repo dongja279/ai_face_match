@@ -10,23 +10,18 @@
     --bg:#0b1220; --panel:#0f172a; --panel2:#0d1628;
     --ink:#ffffff; --muted:#cfe1ff; --sub:#e7efff;
     --accent:#7c3aed; --accent2:#22d3ee; --line:#20314d;
-    --ink-strong:#0d1220; /* 모바일에서 진하게 보이는 블랙 */
+    --ink-strong:#000000;
   }
   @media (prefers-color-scheme: light){
     :root{
       --bg:#f6f8fc; --panel:#ffffff; --panel2:#ffffff;
       --ink:#0b1320; --muted:#24324a; --sub:#1b2740; --line:#e7edf5;
-      --accent:#6d28d9; --accent2:#0891b2;
-      --ink-strong:#000000;
+      --accent:#6d28d9; --accent2:#0891b2; --ink-strong:#000000;
     }
   }
   *{box-sizing:border-box}
-  html,body{
-    margin:0;background:var(--bg);color:var(--ink);
-    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,Helvetica,Arial;
-    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
-    text-shadow:none; /* 흐릿함 방지 */
-  }
+  html,body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,Roboto,Helvetica,Arial}
   .wrap{max-width:1040px;margin:0 auto;padding:16px}
 
   /* 헤더 */
@@ -38,40 +33,39 @@
   .brand h1{margin:0;font-size:22px;font-weight:900;letter-spacing:.2px;color:#fff}
   .brand p{margin:2px 0 0;color:#e8f2ff;font-weight:700}
 
+  /* 패널/그리드 */
   .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));
     border:1px solid var(--line);border-radius:16px;padding:16px}
-
-  /* 업로더 */
   .grid{display:grid;gap:16px}
   @media(min-width:960px){ .grid{grid-template-columns:1fr 1fr} }
 
+  /* 업로더 */
   .slot{position:relative;border:1px dashed #5c6b85;background:#0b1424;border-radius:16px;padding:10px}
   .slot .preview{
     display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;
     border:1px solid #1e2a40;background:#0b1424;
   }
-  /* alt/아이콘 표시 제거 */
-  .slot .preview[alt]{color:transparent}
+  .slot .preview:not([src]), .slot .preview[src=""]{opacity:1}
   .slot .choose{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);
     padding:12px 18px;border-radius:12px;border:1px solid #ffffff28;
     background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-weight:900;cursor:pointer}
   input[type=file]{display:none}
 
+  /* 진행률 */
   .meter{height:10px;border-radius:999px;background:#0d1628;border:1px solid #182a48;overflow:hidden}
   .meter>div{height:100%;width:0%;background:linear-gradient(90deg,var(--accent2),var(--accent))}
-  .status{margin-top:8px;color:var(--ink-strong);font-weight:900} /* 진행률: 블랙계열 */
+  .status{margin-top:8px;color:var(--ink-strong);font-weight:900}   /* 검정 */
 
   .actions{display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap}
   .btn{border:none;border-radius:14px;padding:14px 18px;font-weight:900;cursor:pointer;transition:.2s}
   .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;min-width:240px}
   .btn.secondary{background:#123; border:1px solid #2a3b5b;color:#dfe7fb;min-width:240px}
-  .btn.ghost{background:#0f172a;border:1px solid #2a3b5b;color:#dfe7fb;min-width:240px}
   .btn:disabled{opacity:.5;cursor:not-allowed}
 
-  /* 타이틀을 진하게(블랙) */
-  h2.section-title{margin:0 0 10px;font-size:20px;font-weight:900;color:var(--ink-strong)}
+  /* 섹션 타이틀 – 모바일 가독성 위해 검정 + 그림자 제거 */
+  h2.section-title{margin:0 0 10px;font-size:20px;font-weight:900;color:#000}
 
-  /* 결과 카드 */
+  /* 카드 */
   .card{background:#0e1728;border:1px solid #22324f;border-radius:16px;padding:14px;margin-top:12px;color:#eaf2ff}
   .list{margin:6px 0 0 0;padding:0 0 0 18px}
   .list li{margin:6px 0}
@@ -87,13 +81,14 @@
   .mini h4{margin:0 0 8px;font-size:15px;font-weight:900;color:#fff}
   .mini .reason,.mini .verdict{font-weight:800}
   .mini .tips{margin:8px 0 0 16px}
+  .dim{color:#e9f2ff}
+
+  /* 페이드 인 */
+  .fade{opacity:0; transform:translateY(8px); transition:.45s ease}
+  .fade.show{opacity:1; transform:none}
 
   footer{margin:20px 0;color:#cfe1ff;text-align:center}
   footer a{color:#fff;font-weight:800}
-
-  /* 등장 애니메이션 */
-  .fade-up{opacity:0; transform:translateY(10px); animation:fadeUp .45s ease-out forwards}
-  @keyframes fadeUp {to{opacity:1; transform:translateY(0)}}
 </style>
 </head>
 <body>
@@ -108,8 +103,8 @@
 </header>
 
 <main class="wrap">
-  <!-- 업로드: 제목(사진 업로드) 삭제 요청 → 타이틀 생략 -->
-  <section class="panel fade-up">
+  <!-- 업로드 (제목 텍스트 제거됨) -->
+  <section class="panel">
     <div class="grid">
       <div class="slot">
         <img id="prevA" class="preview" alt="" />
@@ -125,7 +120,7 @@
 
     <div style="margin-top:14px">
       <div class="meter"><div id="bar"></div></div>
-      <div id="status" class="status">대기 중…</div>
+      <div id="status" class="status">대기 중…</div> <!-- 검정 텍스트 -->
     </div>
 
     <div class="actions">
@@ -134,7 +129,7 @@
   </section>
 
   <!-- 하이라이트 -->
-  <section id="hi" class="panel fade-up" style="margin-top:16px;display:none">
+  <section id="hi" class="panel fade" style="margin-top:16px;display:none">
     <h2 class="section-title">결과 하이라이트</h2>
 
     <div id="loveCard" class="card">
@@ -142,7 +137,7 @@
         <div class="scoreBadge" id="loveScore">–</div>
         <div>
           <div style="font-weight:900">💖 연애/우정 궁합</div>
-          <div id="loveSummary" style="opacity:.9">—</div>
+          <div id="loveSummary" class="dim">—</div>
         </div>
       </div>
       <div class="mini">
@@ -158,7 +153,7 @@
         <div class="scoreBadge" id="bizScore">–</div>
         <div>
           <div style="font-weight:900">💼 비즈니스 궁합</div>
-          <div id="bizSummary" style="opacity:.9">—</div>
+          <div id="bizSummary" class="dim">—</div>
         </div>
       </div>
       <div class="mini">
@@ -171,22 +166,24 @@
   </section>
 
   <!-- 개인별 -->
-  <section id="persons" class="panel fade-up" style="margin-top:16px;display:none">
+  <section id="persons" class="panel fade" style="margin-top:16px;display:none">
     <h2 class="section-title">👤 개인별 관상 특징 & 운세</h2>
 
     <div id="personA" class="card">
-      <div class="row"><span class="pill">A</span><span style="opacity:.85">관상 기반 운세</span></div>
+      <div class="row"><span class="pill">A</span><span class="dim">관상 기반 운세</span></div>
       <div id="aFortunes"></div>
     </div>
 
     <div id="personB" class="card">
-      <div class="row"><span class="pill">B</span><span style="opacity:.85">관상 기반 운세</span></div>
+      <div class="row"><span class="pill">B</span><span class="dim">관상 기반 운세</span></div>
       <div id="bFortunes"></div>
     </div>
+  </section>
 
-    <!-- 결과 하단 공유 버튼 -->
-    <div class="actions" style="margin-top:18px">
-      <button id="shareBtn" class="btn ghost" disabled>🔗 결과 공유하기</button>
+  <!-- 공유 영역 (하단 고정) -->
+  <section class="panel fade" id="shareArea" style="margin-top:16px;display:none">
+    <div class="actions">
+      <button id="shareBtn" class="btn secondary" disabled>🔗 결과 공유하기</button>
     </div>
   </section>
 
@@ -194,13 +191,13 @@
 </main>
 
 <script>
-  // ====== 엘리먼트 ======
+  // 요소 참조
   const pickA=document.getElementById('pickA'), pickB=document.getElementById('pickB');
   const fileA=document.getElementById('fileA'), fileB=document.getElementById('fileB');
   const prevA=document.getElementById('prevA'), prevB=document.getElementById('prevB');
   const analyzeBtn=document.getElementById('analyze'), shareBtn=document.getElementById('shareBtn');
   const bar=document.getElementById('bar'), statusEl=document.getElementById('status');
-  const hiSec=document.getElementById('hi'), personsSec=document.getElementById('persons');
+  const hiSec=document.getElementById('hi'), personsSec=document.getElementById('persons'), shareArea=document.getElementById('shareArea');
 
   const loveScore=document.getElementById('loveScore'), loveSummary=document.getElementById('loveSummary');
   const loveStrengths=document.getElementById('loveStrengths'), loveCautions=document.getElementById('loveCautions');
@@ -208,30 +205,30 @@
   const bizStrengths=document.getElementById('bizStrengths'), bizCautions=document.getElementById('bizCautions');
   const aFortunes=document.getElementById('aFortunes'), bFortunes=document.getElementById('bFortunes');
 
-  // ====== 파일 ======
+  // 파일 핸들링
   const readAsDataURL = f => new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(f); });
   pickA.onclick=()=>fileA.click(); pickB.onclick=()=>fileB.click();
   let imgA=null,imgB=null;
   fileA.onchange=async e=>{const f=e.target.files?.[0]; if(!f) return; imgA=await readAsDataURL(f); prevA.src=imgA;}
   fileB.onchange=async e=>{const f=e.target.files?.[0]; if(!f) return; imgB=await readAsDataURL(f); prevB.src=imgB;}
 
-  // ====== 진행률 ======
+  // 진행률
   function startProgress(){
-    shareBtn.disabled=true; hiSec.style.display='none'; personsSec.style.display='none';
+    shareBtn.disabled=true; hiSec.style.display='none'; personsSec.style.display='none'; shareArea.style.display='none';
     statusEl.textContent='분석 준비 중…'; bar.style.width='0%';
-    let p=0; const t=setInterval(()=>{ p+=Math.floor(Math.random()*12)+8; if(p>=96)p=96; bar.style.width=p+'%'; statusEl.textContent=`${p}% 분석 중…`; },450);
+    let p=0; const t=setInterval(()=>{ p+=Math.floor(Math.random()*12)+8; if(p>=96)p=96; bar.style.width=p+'%'; statusEl.textContent=p+'% 분석 중…'; },450);
     return ()=>clearInterval(t);
   }
   function finishProgress(){ bar.style.width='100%'; statusEl.textContent='분석 완료!'; }
 
-  // ====== 유틸 ======
+  // 렌더 헬퍼
   const li = s => `<li>${String(s||'')}</li>`;
   const listHtml = a => (a||[]).map(li).join('');
   function mini(title,obj){
     return `<div class="mini">
       <h4>${title}</h4>
-      <div class="reason"><b>근거:</b> ${String(obj?.reason||'-')}</div>
-      <div class="verdict"><b>결론:</b> ${String(obj?.verdict||'-')}</div>
+      <div class="reason"><b>근거:</b> ${String(obj?.reason||'')}</div>
+      <div class="verdict"><b>결론:</b> ${String(obj?.verdict||'')}</div>
       ${(obj?.tips?.length? `<ul class="tips">${listHtml(obj.tips)}</ul>`:'')}
     </div>`;
   }
@@ -247,16 +244,51 @@
     bizStrengths.innerHTML=listHtml(B.strengths); bizCautions.innerHTML=listHtml(B.cautions);
   }
 
+  // 공유 링크 생성 API
   async function createShareLink(payload){
-    // 이미지 제거(용량 방지)
-    const safe = JSON.parse(JSON.stringify(payload));
-    delete safe.imgA; delete safe.imgB;
-    const r=await fetch('/api/share',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:safe})});
-    const j=await r.json(); if(!r.ok) throw new Error(j?.error||'공유 링크 생성 실패'); return j.url;
+    const r=await fetch('/api/share',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:payload})});
+    const j=await r.json().catch(()=> ({}));
+    if(!r.ok||!j?.url) throw new Error(j?.error||'공유 링크 생성 실패');
+    return j.url;
   }
 
-  // ====== 분석 ======
-  let lastData=null; // 공유 시 사용할 최종 결과
+  // 통합 공유 핸들러
+  async function shareResultInteractively(data, btn){
+    const original = btn.textContent;
+    btn.disabled = true; btn.textContent = '링크 생성 중…';
+    let url;
+    try{
+      url = await createShareLink(data);
+    }catch(e){
+      btn.textContent = original; btn.disabled=false;
+      alert('공유 링크 생성에 실패했습니다.\n'+(e?.message||e));
+      return;
+    }
+
+    const title='AI 관상궁합 결과';
+    const text='우리 궁합 결과를 확인해보세요! ✨';
+
+    try{
+      if(navigator.share){
+        await navigator.share({title,text,url});
+        btn.textContent='✅ 공유 완료';
+        setTimeout(()=>{btn.textContent=original; btn.disabled=false;},1200);
+        return;
+      }
+    }catch(e){/* 취소/실패 → 폴백 */}
+
+    try{
+      await navigator.clipboard.writeText(`${title}\n${text}\n${url}`);
+      btn.textContent='✅ 링크 복사됨';
+      setTimeout(()=>{btn.textContent=original; btn.disabled=false;},1200);
+      return;
+    }catch(e){/* 권한 실패 → 최종 폴백 */}
+
+    prompt('아래 링크를 길게 눌러 복사해 공유하세요.', url);
+    btn.textContent=original; btn.disabled=false;
+  }
+
+  // 분석
   analyzeBtn.onclick=async ()=>{
     if(!imgA||!imgB){alert('A, B 사진을 모두 업로드해 주세요.');return;}
     const stop=startProgress(); analyzeBtn.disabled=true;
@@ -264,32 +296,17 @@
       const res=await fetch('/api/match',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imgA,imgB})});
       const data=await res.json(); if(!res.ok) throw new Error(data?.error||'분석 실패');
 
-      lastData=data;
       renderHighlights(data); renderPersons(data.personA,data.personB);
-      hiSec.style.display=''; personsSec.style.display=''; stop(); finishProgress();
+      // ✅ 공유용 데이터 저장
+      window.__lastResultData = data;
 
-      // 공유 버튼 (기본 공유 시트)
+      // 결과/공유 영역 표시 + 페이드인
+      hiSec.style.display=''; personsSec.style.display=''; shareArea.style.display='';
+      requestAnimationFrame(()=>{ hiSec.classList.add('show'); personsSec.classList.add('show'); shareArea.classList.add('show'); });
+
+      stop(); finishProgress();
       shareBtn.disabled=false;
-      shareBtn.onclick=async()=>{
-        try{
-          shareBtn.disabled=true; shareBtn.textContent='링크 생성 중…';
-          const url=await createShareLink(lastData);
-          const sharePayload={ title:'AI 관상궁합 결과', text:'우리 궁합 결과를 확인해보세요! ✨', url };
-          if(navigator.share){
-            await navigator.share(sharePayload);
-            shareBtn.textContent='✅ 공유됨';
-          }else{
-            await navigator.clipboard.writeText(url);
-            alert('공유 링크를 복사했습니다.');
-            shareBtn.textContent='✅ 링크 복사됨';
-          }
-          setTimeout(()=>{shareBtn.textContent='🔗 결과 공유하기'; shareBtn.disabled=false;},1500);
-        }catch(e){
-          console.error(e);
-          alert('공유에 실패했습니다: '+(e?.message||e));
-          shareBtn.textContent='🔗 결과 공유하기'; shareBtn.disabled=false;
-        }
-      };
+      shareBtn.onclick=()=>shareResultInteractively(window.__lastResultData, shareBtn);
 
     }catch(e){ stop(); finishProgress(); alert('분석 중 오류가 발생했습니다.\n'+(e?.message||e)); }
     finally{ analyzeBtn.disabled=false; }
